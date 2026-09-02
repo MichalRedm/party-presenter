@@ -63,19 +63,19 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
       {/* Background Ambient Particles matching theme */}
       <AmbientParticles type={activeTheme.particleType} glowColor={activeTheme.colors.accentPrimary} />
 
-      {/* Main Center Stage */}
-      <main className="relative z-10 w-full h-full flex-1 flex items-center justify-center overflow-hidden">
+      {/* Main Center Stage - allow glows to breathe without clipping */}
+      <main className="relative z-10 w-full h-full flex-1 flex items-center justify-center">
         {children}
       </main>
 
       {/* Discreet Projector Navigation & Overlay Bar (auto-hides) */}
       <footer
-        className={`fixed bottom-0 inset-x-0 z-30 p-4 transition-opacity duration-300 flex items-center justify-between ${
+        className={`fixed bottom-0 inset-x-0 z-30 p-4 transition-opacity duration-300 flex items-center justify-between pointer-events-none ${
           controlsVisible ? 'opacity-100' : 'opacity-0 hover:opacity-100'
         }`}
       >
         {/* Left: Item Counter & Title */}
-        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 text-xs font-semibold text-slate-300 max-w-xs md:max-w-sm">
+        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 text-xs font-semibold text-slate-300 max-w-xs md:max-w-sm pointer-events-auto shadow-xl">
           <span className="font-mono text-purple-400 font-bold shrink-0">
             {currentIndex >= 0 ? currentIndex + 1 : 1} / {totalItems}
           </span>
@@ -84,8 +84,8 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
           </span>
         </div>
 
-        {/* Center: Slide Arrows & Quick Triggers - ALWAYS strictly centered */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 rounded-2xl bg-black/75 backdrop-blur-xl border border-white/15 shadow-2xl">
+        {/* Center: Slide Arrows & Quick Triggers - strictly centered horizontally */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 rounded-2xl bg-black/75 backdrop-blur-xl border border-white/15 shadow-2xl pointer-events-auto">
           <Button
             variant="ghost"
             size="sm"
@@ -118,7 +118,7 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
         </div>
 
         {/* Right: Sound, Theme, Fullscreen, Admin Link, Help */}
-        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 ml-auto">
+        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 ml-auto pointer-events-auto shadow-xl">
           <Button
             variant="ghost"
             size="sm"
