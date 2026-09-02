@@ -24,7 +24,7 @@ Deliver and maintain the full Party Presenter presentation application running o
   - [x] `countdown` (Big screen countdown timer with audio ticks and zero celebration)
   - [x] `codenames` (Wielka gra w tajniaków: 5x5 grid, word bank, spymaster sync, turn timers, 3D card flips)
   - [x] `hot-seat` (Gorące krzesło: Google Form CSV/TSV parser, blind import mode, roulette drawing)
-- [x] High-contrast fullscreen Projector view with keyboard shortcuts (`Space`, `Arrows`, `F`, `H`, `M`, `C`, `T`).
+- [x] High-contrast fullscreen Projector view with keyboard shortcuts (`Space`, `Arrows`, `F`, `H`, `M`, `C`, `T`), inactivity auto-hiding controls (2.5s) and cursor hiding in fullscreen mode.
 - [x] Comprehensive Admin panel & live remote controller (`/admin`).
 - [x] Dedicated Spymasters view for Codenames (`/spymaster`).
 - [x] Clean build and zero-warning lint verification (`npm run build`, `npm run lint`).

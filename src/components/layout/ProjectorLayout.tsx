@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParty } from '../../context/PartyContext';
 import { AmbientParticles } from '../effects/AmbientParticles';
 import { useKeyboardNavigation } from '../../hooks/useKeyboardNavigation';
@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { THEMES } from '../../themes/presets';
 
+const INACTIVITY_TIMEOUT_MS = 2500;
+
 export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
     activeTheme,
@@ -32,8 +34,48 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
   } = useParty();
 
   const { showHelp, setShowHelp } = useKeyboardNavigation(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(Boolean(document.fullscreenElement));
   const [controlsVisible, setControlsVisible] = useState(false);
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync fullscreen state with browser changes (e.g. F11, Esc, button clicks)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const clearInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+  }, []);
+
+  const handleUserActivity = useCallback(() => {
+    setControlsVisible(true);
+    clearInactivityTimer();
+
+    inactivityTimerRef.current = setTimeout(() => {
+      setControlsVisible(false);
+    }, INACTIVITY_TIMEOUT_MS);
+  }, [clearInactivityTimer]);
+
+  const handleMouseLeave = useCallback(() => {
+    clearInactivityTimer();
+    setControlsVisible(false);
+  }, [clearInactivityTimer]);
+
+  useEffect(() => {
+    return () => {
+      clearInactivityTimer();
+    };
+  }, [clearInactivityTimer]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -52,13 +94,18 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const currentIndex = activeProfile.items.findIndex(i => i.id === activeItem?.id);
   const totalItems = activeProfile.items.length;
 
+  // In fullscreen mode, hide cursor when controls are hidden after inactivity
+  const shouldHideCursor = isFullscreen && !controlsVisible;
+
   return (
     <div
-      className={`relative w-screen h-screen overflow-hidden bg-gradient-to-br ${activeTheme.colors.bgGradient} transition-colors duration-1000 flex flex-col justify-between select-none`}
-      onMouseMove={() => {
-        setControlsVisible(true);
-      }}
-      onMouseLeave={() => setControlsVisible(false)}
+      className={`relative w-screen h-screen overflow-hidden bg-gradient-to-br ${activeTheme.colors.bgGradient} transition-colors duration-1000 flex flex-col justify-between select-none ${
+        shouldHideCursor ? 'cursor-none' : ''
+      }`}
+      onMouseMove={handleUserActivity}
+      onMouseDown={handleUserActivity}
+      onTouchStart={handleUserActivity}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Background Ambient Particles matching theme */}
       <AmbientParticles type={activeTheme.particleType} glowColor={activeTheme.colors.accentPrimary} />
@@ -70,8 +117,8 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
       {/* Discreet Projector Navigation & Overlay Bar (auto-hides) */}
       <footer
-        className={`fixed bottom-0 inset-x-0 z-30 p-4 transition-opacity duration-300 flex items-center justify-between pointer-events-none ${
-          controlsVisible ? 'opacity-100' : 'opacity-0 hover:opacity-100'
+        className={`fixed bottom-0 inset-x-0 z-30 p-4 transition-opacity duration-300 flex items-center justify-between ${
+          controlsVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         {/* Left: Item Counter & Title */}
