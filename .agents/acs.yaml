@@ -1,0 +1,53 @@
+name: "Party Presenter (urodziny)"
+version: "1.0"
+description: "Interactive party presentation and projector hosting web app with real-time BroadcastChannel sync and extensible module registry."
+entrypoint: "../AGENTS.md"
+layers:
+  rules:
+    - path: "./rules/react_standards.md"
+      description: "React 19, TypeScript, Tailwind CSS and component UI design standards."
+      trigger_paths:
+        - "src/components/**"
+        - "src/pages/**"
+        - "src/hooks/**"
+    - path: "./rules/module_standards.md"
+      description: "Extensible Module Registry standards and module authoring guidelines."
+      trigger_paths:
+        - "src/modules/**"
+        - "src/types/modules.ts"
+    - path: "./rules/ci_standards.md"
+      description: "Local CI validation equivalents and build failure resolution protocols."
+      trigger_paths:
+        - "package.json"
+        - "tsconfig*.json"
+        - "vite.config.ts"
+    - path: "./rules/agent_maintenance_standards.md"
+      description: "Autonomous self-maintenance triggers and procedure."
+      trigger_paths:
+        - ".agents/**"
+    - path: "./rules/git_and_pr_standards.md"
+      description: "Conventional Commits, atomic commits and git protocol standards."
+      trigger_paths:
+        - "AGENTS.md"
+        - ".github/**"
+  context:
+    - path: "./context/architecture.md"
+      description: "Multi-window synchronization, offline storage and presentation architecture."
+      trigger_paths:
+        - "src/context/**"
+        - "src/services/**"
+    - path: "./context/modules_spec.md"
+      description: "Specifications for built-in modules (Agenda, Text Slide, Slideshow, Countdown, Codenames, Hot Seat)."
+      trigger_paths:
+        - "src/modules/**"
+    - path: "./context/state_and_sync.md"
+      description: "Data contracts for PartyState, local storage schemas and BroadcastChannel messages."
+      trigger_paths:
+        - "src/types/**"
+        - "src/context/PartyContext.tsx"
+  skills:
+    - path: "./skills/agent-maintenance/SKILL.md"
+      description: "Autonomous .agents/ context maintenance workflow."
+metadata:
+  primary_agent: "Antigravity"
+  objective: "Build and deploy the full Party Presenter application with complete module suite and real-time projector sync."
