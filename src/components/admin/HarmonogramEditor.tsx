@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -6,7 +6,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragStartEvent,
   DragEndEvent,
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -14,10 +16,11 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { Clock, Plus } from 'lucide-react';
 import { PartyScheduleItem } from '../../types/party';
 import { Button } from '../ui/Button';
-import { HarmonogramItem } from './HarmonogramItem';
+import { HarmonogramCard, HarmonogramItem } from './HarmonogramItem';
 
 export interface HarmonogramEditorProps {
   items: PartyScheduleItem[];
@@ -38,6 +41,8 @@ export const HarmonogramEditor: React.FC<HarmonogramEditorProps> = ({
   onEditItemMeta,
   onDeleteItem,
 }) => {
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -49,8 +54,13 @@ export const HarmonogramEditor: React.FC<HarmonogramEditorProps> = ({
     })
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(String(event.active.id));
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveDragId(null);
 
     if (over && active.id !== over.id) {
       const oldIndex = items.findIndex(item => item.id === active.id);
@@ -62,6 +72,13 @@ export const HarmonogramEditor: React.FC<HarmonogramEditorProps> = ({
       }
     }
   };
+
+  const handleDragCancel = () => {
+    setActiveDragId(null);
+  };
+
+  const activeDragItem = activeDragId ? items.find(i => i.id === activeDragId) : null;
+  const activeDragIndex = activeDragId ? items.findIndex(i => i.id === activeDragId) : -1;
 
   return (
     <div className="space-y-4">
@@ -84,13 +101,16 @@ export const HarmonogramEditor: React.FC<HarmonogramEditorProps> = ({
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        modifiers={[restrictToVerticalAxis]}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
       >
         <SortableContext
           items={items.map(item => item.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-2.5 max-h-[750px] overflow-y-auto pr-1">
+          <div className="space-y-2.5 max-h-[750px] overflow-y-auto overflow-x-hidden pr-1">
             {items.map((item, index) => (
               <HarmonogramItem
                 key={item.id}
@@ -105,6 +125,17 @@ export const HarmonogramEditor: React.FC<HarmonogramEditorProps> = ({
             ))}
           </div>
         </SortableContext>
+
+        <DragOverlay modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}>
+          {activeDragItem ? (
+            <HarmonogramCard
+              item={activeDragItem}
+              index={activeDragIndex}
+              isCurrent={activeDragItem.id === activeItemId}
+              isOverlay={true}
+            />
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </div>
   );

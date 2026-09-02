@@ -6,55 +6,45 @@ import { PartyScheduleItem } from '../../types/party';
 import { getModuleDefinition } from '../../modules/registry';
 import { Badge } from '../ui/Badge';
 
-export interface HarmonogramItemProps {
+export interface HarmonogramCardProps {
   item: PartyScheduleItem;
   index: number;
-  isCurrent: boolean;
-  canDelete: boolean;
-  onSelect: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  isCurrent?: boolean;
+  canDelete?: boolean;
+  isOverlay?: boolean;
+  isDragging?: boolean;
+  onSelect?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
 }
 
-export const HarmonogramItem: React.FC<HarmonogramItemProps> = ({
+export const HarmonogramCard: React.FC<HarmonogramCardProps> = ({
   item,
   index,
-  isCurrent,
-  canDelete,
+  isCurrent = false,
+  canDelete = false,
+  isOverlay = false,
+  isDragging = false,
   onSelect,
   onEdit,
   onDelete,
+  dragHandleProps,
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id });
-
-  const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 50 : undefined,
-    opacity: isDragging ? 0.6 : 1,
-  };
-
   const def = getModuleDefinition(item.type);
   const IconComponent = def.icon;
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
       onClick={onSelect}
-      className={`relative p-4 rounded-2xl border transition-all cursor-pointer select-none group ${
-        isDragging
-          ? 'bg-purple-900/50 border-purple-400 shadow-2xl ring-2 ring-purple-400/60 scale-[1.02]'
+      className={`relative p-4 rounded-2xl border select-none group transition-shadow ${
+        isOverlay
+          ? 'bg-purple-900/90 border-purple-400 shadow-2xl ring-2 ring-purple-400/80 cursor-grabbing backdrop-blur-md'
+          : isDragging
+          ? 'opacity-30 bg-slate-900/40 border-dashed border-purple-500/50'
           : isCurrent
-          ? 'bg-purple-950/70 border-purple-400/80 shadow-lg shadow-purple-600/30 ring-2 ring-purple-400/40'
-          : 'bg-slate-900/70 hover:bg-slate-800/80 border-slate-800'
+          ? 'bg-purple-950/70 border-purple-400/80 shadow-lg shadow-purple-600/30 ring-2 ring-purple-400/40 cursor-pointer'
+          : 'bg-slate-900/70 hover:bg-slate-800/80 border-slate-800 cursor-pointer'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -63,10 +53,11 @@ export const HarmonogramItem: React.FC<HarmonogramItemProps> = ({
           {/* Drag Handle */}
           <button
             type="button"
-            {...attributes}
-            {...listeners}
+            {...dragHandleProps}
             onClick={e => e.stopPropagation()}
-            className="p-1.5 mt-1 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/5 active:bg-purple-500/20 active:text-purple-300 cursor-grab active:cursor-grabbing shrink-0 touch-none transition-colors"
+            className={`p-1.5 mt-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 active:bg-purple-500/30 active:text-purple-200 shrink-0 touch-none transition-colors ${
+              isOverlay ? 'cursor-grabbing text-purple-300' : 'cursor-grab'
+            }`}
             title="Przeciągnij, aby zmienić kolejność"
             aria-label="Przeciągnij, aby zmienić kolejność"
           >
@@ -114,30 +105,86 @@ export const HarmonogramItem: React.FC<HarmonogramItemProps> = ({
         </div>
 
         {/* Right: Actions (Edit Meta, Delete) */}
-        <div
-          className="flex items-center gap-1 shrink-0"
-          onClick={e => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            onClick={onEdit}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-purple-300 hover:bg-white/5 cursor-pointer transition-colors"
-            title="Edytuj szczegóły i godzinę"
+        {!isOverlay && (
+          <div
+            className="flex items-center gap-1 shrink-0"
+            onClick={e => e.stopPropagation()}
           >
-            <Settings className="w-4 h-4" />
-          </button>
+            {onEdit && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-purple-300 hover:bg-white/5 cursor-pointer transition-colors"
+                title="Edytuj szczegóły i godzinę"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            )}
 
-          <button
-            type="button"
-            onClick={onDelete}
-            disabled={!canDelete}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-white/5 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed transition-colors"
-            title="Usuń"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={onDelete}
+                disabled={!canDelete}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-white/5 disabled:opacity-20 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                title="Usuń"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
+    </div>
+  );
+};
+
+export interface HarmonogramItemProps {
+  item: PartyScheduleItem;
+  index: number;
+  isCurrent: boolean;
+  canDelete: boolean;
+  onSelect: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+export const HarmonogramItem: React.FC<HarmonogramItemProps> = ({
+  item,
+  index,
+  isCurrent,
+  canDelete,
+  onSelect,
+  onEdit,
+  onDelete,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition: isDragging ? undefined : transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <HarmonogramCard
+        item={item}
+        index={index}
+        isCurrent={isCurrent}
+        canDelete={canDelete}
+        isDragging={isDragging}
+        onSelect={onSelect}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        dragHandleProps={{ ...attributes, ...listeners }}
+      />
     </div>
   );
 };
