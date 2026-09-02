@@ -103,8 +103,8 @@ export const CountdownProjector: React.FC<{
             {timeLeft.hours > 0 && (
               <>
                 <div className="flex flex-col items-center">
-                  <div className="px-6 py-4 md:px-10 md:py-8 rounded-3xl bg-slate-900/80 border border-white/15 backdrop-blur-2xl shadow-2xl">
-                    <span className="text-6xl md:text-9xl font-mono font-black text-white tracking-tight drop-shadow-2xl">
+                  <div className="w-36 md:w-56 h-28 md:h-44 flex items-center justify-center rounded-3xl bg-slate-900/80 border border-white/15 backdrop-blur-2xl shadow-2xl">
+                    <span className="text-6xl md:text-9xl font-mono font-black text-white tracking-tight drop-shadow-2xl tabular-nums select-none text-center">
                       {pad(timeLeft.hours)}
                     </span>
                   </div>
@@ -118,8 +118,8 @@ export const CountdownProjector: React.FC<{
 
             {/* Minutes */}
             <div className="flex flex-col items-center">
-              <div className="px-6 py-4 md:px-10 md:py-8 rounded-3xl bg-slate-900/80 border border-white/15 backdrop-blur-2xl shadow-2xl">
-                <span className="text-6xl md:text-9xl font-mono font-black text-white tracking-tight drop-shadow-2xl">
+              <div className="w-36 md:w-56 h-28 md:h-44 flex items-center justify-center rounded-3xl bg-slate-900/80 border border-white/15 backdrop-blur-2xl shadow-2xl">
+                <span className="text-6xl md:text-9xl font-mono font-black text-white tracking-tight drop-shadow-2xl tabular-nums select-none text-center">
                   {pad(timeLeft.minutes)}
                 </span>
               </div>
@@ -132,12 +132,12 @@ export const CountdownProjector: React.FC<{
 
             {/* Seconds */}
             <div className="flex flex-col items-center">
-              <div className={`px-6 py-4 md:px-10 md:py-8 rounded-3xl border backdrop-blur-2xl shadow-2xl transition-all ${
+              <div className={`w-36 md:w-56 h-28 md:h-44 flex items-center justify-center rounded-3xl border backdrop-blur-2xl shadow-2xl transition-all ${
                 timeLeft.totalSeconds <= 10
                   ? 'bg-rose-950/80 border-rose-500 shadow-rose-600/50 scale-105 animate-pulse ring-4 ring-rose-500/40'
                   : 'bg-slate-900/80 border-white/15'
               }`}>
-                <span className={`text-6xl md:text-9xl font-mono font-black tracking-tight drop-shadow-2xl ${
+                <span className={`text-6xl md:text-9xl font-mono font-black tracking-tight drop-shadow-2xl tabular-nums select-none text-center ${
                   timeLeft.totalSeconds <= 10 ? 'text-rose-300' : 'text-purple-300'
                 }`}>
                   {pad(timeLeft.seconds)}
