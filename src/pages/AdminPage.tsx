@@ -7,15 +7,10 @@ import { Input, Textarea } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { getAllAvailableModules, getModuleDefinition } from '../modules/registry';
 import { PartyScheduleItem } from '../types/party';
+import { HarmonogramEditor } from '../components/admin/HarmonogramEditor';
 import {
   ChevronLeft,
   ChevronRight,
-  Plus,
-  Trash2,
-  ArrowUp,
-  ArrowDown,
-  Clock,
-  Settings,
   Sparkles,
   Volume2,
   Tv,
@@ -74,25 +69,6 @@ export const AdminPage: React.FC = () => {
     setNewItemTitle('');
     setNewItemTime('');
     setNewItemNotes('');
-  };
-
-  // Reorder Item Up / Down
-  const handleMoveUp = (index: number) => {
-    if (index <= 0) return;
-    const items = [...activeProfile.items];
-    const temp = items[index - 1];
-    items[index - 1] = items[index];
-    items[index] = temp;
-    reorderItems(items.map(i => i.id));
-  };
-
-  const handleMoveDown = (index: number) => {
-    if (index >= activeProfile.items.length - 1) return;
-    const items = [...activeProfile.items];
-    const temp = items[index + 1];
-    items[index + 1] = items[index];
-    items[index] = temp;
-    reorderItems(items.map(i => i.id));
   };
 
   // Active module definition
@@ -224,125 +200,20 @@ export const AdminPage: React.FC = () => {
         {/* TWO COLUMN WORKSPACE: SCHEDULE TIMELINE (LEFT) & MODULE CONFIG (RIGHT) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* LEFT COLUMN: TIMELINE & SCHEDULE (5 Cols) */}
-          <div className="lg:col-span-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <Clock className="w-5 h-5 text-purple-400" />
-                Harmonogram ({activeProfile.items.length})
-              </h3>
-
-              <Button
-                variant="glow"
-                size="sm"
-                onClick={() => setIsAddModalOpen(true)}
-                icon={<Plus className="w-4 h-4" />}
-              >
-                Dodaj punkt
-              </Button>
-            </div>
-
-            {/* Timeline Items List */}
-            <div className="space-y-2.5 max-h-[750px] overflow-y-auto pr-1">
-              {activeProfile.items.map((item, index) => {
-                const isCurrent = item.id === activeItem?.id;
-                const def = getModuleDefinition(item.type);
-                const IconComponent = def.icon;
-
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => setActiveItem(item.id)}
-                    className={`relative p-4 rounded-2xl border transition-all cursor-pointer select-none ${
-                      isCurrent
-                        ? 'bg-purple-950/70 border-purple-400/80 shadow-lg shadow-purple-600/30 ring-2 ring-purple-400/40'
-                        : 'bg-slate-900/70 hover:bg-slate-800/80 border-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      {/* Left: Icon & Info */}
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className={`p-2.5 rounded-xl shrink-0 ${
-                          isCurrent ? 'bg-purple-500 text-white shadow-md shadow-purple-500/40' : 'bg-slate-800 text-slate-400'
-                        }`}>
-                          <IconComponent className="w-5 h-5" />
-                        </div>
-
-                        <div className="min-w-0 space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs font-mono font-bold text-slate-400">
-                              #{index + 1}
-                            </span>
-                            {item.time && (
-                              <span className="text-xs font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                                {item.time}
-                              </span>
-                            )}
-                            <Badge variant={isCurrent ? 'purple' : 'slate'} size="sm">
-                              {def.name.split(' ')[0]}
-                            </Badge>
-                          </div>
-
-                          <h4 className={`text-base font-bold truncate ${isCurrent ? 'text-white' : 'text-slate-200'}`}>
-                            {item.title}
-                          </h4>
-
-                          {item.notes && (
-                            <p className="text-xs text-slate-400 line-clamp-1">
-                              {item.notes}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Right: Actions (Reorder Up/Down, Edit Meta, Delete) */}
-                      <div
-                        className="flex items-center gap-1 shrink-0"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <button
-                          onClick={() => handleMoveUp(index)}
-                          disabled={index === 0}
-                          className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-20 cursor-pointer"
-                          title="Przesuń w górę"
-                        >
-                          <ArrowUp className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          onClick={() => handleMoveDown(index)}
-                          disabled={index === activeProfile.items.length - 1}
-                          className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-20 cursor-pointer"
-                          title="Przesuń w dół"
-                        >
-                          <ArrowDown className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          onClick={() => setEditingMetaItemId(item.id)}
-                          className="p-1 rounded text-slate-400 hover:text-purple-300 cursor-pointer"
-                          title="Edytuj szczegóły i godzinę"
-                        >
-                          <Settings className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            if (window.confirm(`Czy na pewno chcesz usunąć punkt "${item.title}"?`)) {
-                              deleteItem(item.id);
-                            }
-                          }}
-                          disabled={activeProfile.items.length <= 1}
-                          className="p-1 rounded text-slate-400 hover:text-rose-400 disabled:opacity-20 cursor-pointer"
-                          title="Usuń"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="lg:col-span-5">
+            <HarmonogramEditor
+              items={activeProfile.items}
+              activeItemId={activeItem?.id}
+              onSelectItem={setActiveItem}
+              onReorderItems={reorderItems}
+              onOpenAddModal={() => setIsAddModalOpen(true)}
+              onEditItemMeta={id => setEditingMetaItemId(id)}
+              onDeleteItem={item => {
+                if (window.confirm(`Czy na pewno chcesz usunąć punkt "${item.title}"?`)) {
+                  deleteItem(item.id);
+                }
+              }}
+            />
           </div>
 
           {/* RIGHT COLUMN: ACTIVE MODULE CONFIGURATION (7 Cols) */}
