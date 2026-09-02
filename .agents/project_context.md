@@ -28,6 +28,7 @@ Deliver and maintain the full Party Presenter presentation application running o
 - [x] Comprehensive Admin panel & live remote controller (`/admin`).
 - [x] Dedicated Spymasters view for Codenames (`/spymaster`).
 - [x] Clean build and zero-warning lint verification (`npm run build`, `npm run lint`).
+- [x] Automated GitHub Actions CI workflow for linting, typechecking, and production builds (`.github/workflows/ci.yml`).
 
 ## Critical Requirements & Developer Guidelines
 1. **Local Setup**: Run `npm install` followed by `npm run dev`.
