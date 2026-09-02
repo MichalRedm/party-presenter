@@ -75,17 +75,17 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
         }`}
       >
         {/* Left: Item Counter & Title */}
-        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 text-xs font-semibold text-slate-300">
-          <span className="font-mono text-purple-400 font-bold">
+        <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 text-xs font-semibold text-slate-300 max-w-xs md:max-w-sm">
+          <span className="font-mono text-purple-400 font-bold shrink-0">
             {currentIndex >= 0 ? currentIndex + 1 : 1} / {totalItems}
           </span>
-          <span className="text-white font-bold truncate max-w-xs">
+          <span className="text-white font-bold truncate">
             {activeItem?.title}
           </span>
         </div>
 
-        {/* Center: Slide Arrows & Quick Triggers */}
-        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/70 backdrop-blur-xl border border-white/15 shadow-2xl">
+        {/* Center: Slide Arrows & Quick Triggers - ALWAYS strictly centered */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 rounded-2xl bg-black/75 backdrop-blur-xl border border-white/15 shadow-2xl">
           <Button
             variant="ghost"
             size="sm"
@@ -118,7 +118,7 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
         </div>
 
         {/* Right: Sound, Theme, Fullscreen, Admin Link, Help */}
-        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10">
+        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 ml-auto">
           <Button
             variant="ghost"
             size="sm"
