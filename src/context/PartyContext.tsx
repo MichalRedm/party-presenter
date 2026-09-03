@@ -1,7 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { PartyState, PartyProfile, PartyScheduleItem, SyncMessage } from '../types/party';
-import { loadPartyState, savePartyState, createInitialPartyState, exportPartyStateToFile } from '../services/storage';
+import {
+  loadPartyState,
+  savePartyState,
+  createInitialPartyState,
+  exportPartyStateToFile,
+  exportPartyPackage,
+  importPartyPackage,
+} from '../services/storage';
 import { getThemeById } from '../themes/presets';
 import { ThemeDefinition } from '../types/theme';
 import { soundEngine } from '../services/soundEngine';
@@ -37,6 +44,8 @@ interface PartyContextValue {
   createNewProfile: (name: string) => void;
   deleteProfile: (profileId: string) => void;
   exportState: () => void;
+  exportPackage: () => Promise<void>;
+  importPackage: (file: File) => Promise<PartyState>;
   importState: (newState: PartyState) => void;
   resetToDefault: () => void;
 }
@@ -688,6 +697,18 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
     exportPartyStateToFile(state, `party_config_${activeProfile.name.toLowerCase().replace(/\s+/g, '_')}.json`);
   }, [state, activeProfile]);
 
+  const exportPackage = useCallback(async () => {
+    const safeName = activeProfile.name.toLowerCase().replace(/\s+/g, '_');
+    await exportPartyPackage(state, `party_package_${safeName}.party`);
+  }, [state, activeProfile]);
+
+  const importPackage = useCallback(async (file: File): Promise<PartyState> => {
+    const importedState = await importPartyPackage(file);
+    setState(importedState);
+    broadcast({ type: 'STATE_REPLACE', payload: importedState });
+    return importedState;
+  }, [broadcast]);
+
   const importState = useCallback(
     (newState: PartyState) => {
       setState(newState);
@@ -728,6 +749,8 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
         createNewProfile,
         deleteProfile,
         exportState,
+        exportPackage,
+        importPackage,
         importState,
         resetToDefault,
       }}

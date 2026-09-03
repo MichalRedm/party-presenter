@@ -1,5 +1,6 @@
 import React from 'react';
 import { Badge } from '../../components/ui/Badge';
+import { useResolvedMediaUrl } from '../../hooks/useResolvedMediaUrl';
 
 export interface TextSlideConfig {
   title: string;
@@ -28,6 +29,8 @@ export const TextSlideProjector: React.FC<{
     textAlign = 'center',
   } = config;
 
+  const resolvedBgUrl = useResolvedMediaUrl(backgroundImage);
+
   const alignClasses = {
     center: 'items-center text-center mx-auto',
     left: 'items-start text-left mr-auto',
@@ -37,11 +40,11 @@ export const TextSlideProjector: React.FC<{
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center p-8 md:p-16 select-none overflow-hidden">
       {/* Background Image with custom opacity and blur */}
-      {backgroundImage && (
+      {resolvedBgUrl && (
         <div
           className="absolute inset-0 bg-cover bg-center transition-all duration-700 pointer-events-none"
           style={{
-            backgroundImage: `url(${backgroundImage})`,
+            backgroundImage: `url(${resolvedBgUrl})`,
             opacity: bgOpacity,
             filter: bgBlur > 0 ? `blur(${bgBlur}px)` : undefined,
             transform: 'scale(1.05)', // prevent blur white edges

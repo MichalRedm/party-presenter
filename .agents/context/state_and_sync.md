@@ -2,7 +2,10 @@
 
 ## 1. Storage & Schema
 
-The whole party configuration is stored in `localStorage` under key `party_presenter_state_v1`.
+The party configuration metadata is stored in `localStorage` under key `party_presenter_state_v1`.
+Binary image assets uploaded by users are kept separately in browser `IndexedDB` (`party_presenter_media_db`) under media keys formatted as `media:img_<timestamp>_<rand>` or `media:bg_<timestamp>_<rand>`. This prevents `localStorage` quota exhaustion (capped at 5MB) and allows exporting clean, AI-friendly JSON states.
+
+For single-file portability, the application supports `.party` / `.zip` bundle packages comprising a clean `party.json` and a `media/` directory.
 
 ### Top-Level State Schema (`PartyState`):
 ```ts

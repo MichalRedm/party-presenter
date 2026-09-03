@@ -1,6 +1,13 @@
 import { PartyState, PartyProfile } from '../types/party';
 import { generateCodenamesBoard } from './codenamesGenerator';
 import { HotSeatConfig } from '../types/hotseat';
+import JSZip from 'jszip';
+import {
+  getMediaBlob,
+  saveMediaBlob,
+  dataUrlToBlob,
+  createMediaKey,
+} from './mediaStorage';
 
 export const STORAGE_KEY = 'party_presenter_state_v1';
 
@@ -210,6 +217,192 @@ export function exportPartyStateToFile(state: PartyState, filename?: string): vo
   downloadAnchor.remove();
 }
 
+/**
+ * Creates an AI-friendly ZIP package (.party or .zip) containing:
+ * - party.json: Clean JSON state without huge Base64 strings, referencing relative "media/..." paths
+ * - media/: Raw image files (JPG, PNG, WebP) extracted from IndexedDB or converted from base64
+ */
+export async function exportPartyPackage(state: PartyState, filename?: string): Promise<void> {
+  const zip = new JSZip();
+  const mediaFolder = zip.folder('media');
+
+  // Deep clone state to rewrite media paths for the clean export
+  const cleanState: PartyState = JSON.parse(JSON.stringify(state));
+
+  let mediaCounter = 1;
+  const mediaKeyToZipPath = new Map<string, string>();
+
+  // Helper to process and bundle an image URL
+  const bundleImage = async (imgUrl: string): Promise<string> => {
+    if (!imgUrl) return '';
+
+    // If already an external URL (http/https), keep as is
+    if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) {
+      return imgUrl;
+    }
+
+    // Check if we've already mapped this key
+    if (mediaKeyToZipPath.has(imgUrl)) {
+      return mediaKeyToZipPath.get(imgUrl)!;
+    }
+
+    let blob: Blob | null = null;
+    let ext = 'jpg';
+
+    if (imgUrl.startsWith('media:')) {
+      blob = await getMediaBlob(imgUrl);
+      if (blob) {
+        if (blob.type.includes('png')) ext = 'png';
+        else if (blob.type.includes('webp')) ext = 'webp';
+        else if (blob.type.includes('gif')) ext = 'gif';
+        else if (blob.type.includes('svg')) ext = 'svg';
+      }
+    } else if (imgUrl.startsWith('data:image/')) {
+      try {
+        const converted = dataUrlToBlob(imgUrl);
+        blob = converted.blob;
+        if (converted.mimeType.includes('png')) ext = 'png';
+        else if (converted.mimeType.includes('webp')) ext = 'webp';
+        else if (converted.mimeType.includes('gif')) ext = 'gif';
+        else if (converted.mimeType.includes('svg')) ext = 'svg';
+      } catch (err) {
+        console.warn('Could not convert base64 image during export:', err);
+      }
+    }
+
+    if (blob && mediaFolder) {
+      const zipFileName = `img_${String(mediaCounter++).padStart(3, '0')}.${ext}`;
+      const zipPath = `media/${zipFileName}`;
+      mediaFolder.file(zipFileName, blob);
+      mediaKeyToZipPath.set(imgUrl, zipPath);
+      return zipPath;
+    }
+
+    return imgUrl;
+  };
+
+  // Traverse all profiles and items to replace media references with clean paths
+  for (const profile of cleanState.profiles) {
+    for (const item of profile.items) {
+      if (item.type === 'slideshow' && item.config) {
+        const cfg = item.config as { images?: Array<{ id: string; url: string; caption?: string }> };
+        if (Array.isArray(cfg.images)) {
+          for (const img of cfg.images) {
+            if (img.url) {
+              img.url = await bundleImage(img.url);
+            }
+          }
+        }
+      } else if (item.type === 'text-slide' && item.config) {
+        const cfg = item.config as { backgroundImage?: string };
+        if (cfg.backgroundImage) {
+          cfg.backgroundImage = await bundleImage(cfg.backgroundImage);
+        }
+      }
+    }
+  }
+
+  // Add clean party.json
+  zip.file('party.json', JSON.stringify(cleanState, null, 2));
+
+  // Generate zip blob
+  const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+
+  // Trigger download
+  const downloadAnchor = document.createElement('a');
+  const safeFilename = filename || `party_package_${new Date().toISOString().slice(0, 10)}.party`;
+
+  const downloadUrl = URL.createObjectURL(zipBlob);
+  downloadAnchor.setAttribute('href', downloadUrl);
+  downloadAnchor.setAttribute('download', safeFilename);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
+}
+
+/**
+ * Imports a ZIP package (.party or .zip) or JSON file:
+ * - Unpacks media assets into IndexedDB
+ * - Rewrites relative 'media/...' paths to 'media:img_...' references in state
+ * - Returns clean PartyState
+ */
+export async function importPartyPackage(file: File): Promise<PartyState> {
+  const isZip = file.name.endsWith('.party') || file.name.endsWith('.zip') || file.type.includes('zip');
+
+  if (!isZip) {
+    // Treat as JSON file
+    const text = await file.text();
+    return importPartyStateFromJson(text);
+  }
+
+  const zip = await JSZip.loadAsync(file);
+  const partyJsonFile = zip.file('party.json');
+
+  if (!partyJsonFile) {
+    throw new Error('Paczka nie zawiera wymaganego pliku konfiguracyjnego party.json');
+  }
+
+  const jsonContent = await partyJsonFile.async('string');
+  const parsedState = JSON.parse(jsonContent) as PartyState;
+
+  if (!parsedState || !parsedState.profiles || !Array.isArray(parsedState.profiles)) {
+    throw new Error('Nieprawidłowy format pliku party.json w paczce.');
+  }
+
+  // Map of zip relative path (e.g. "media/img_001.jpg") to IndexedDB mediaKey ("media:img_...")
+  const zipPathToMediaKey = new Map<string, string>();
+
+  // Extract all files in media/ folder and save them into IndexedDB
+  const mediaFiles = zip.file(/^media\//);
+  for (const zipEntry of mediaFiles) {
+    if (zipEntry.dir) continue;
+    const blob = await zipEntry.async('blob');
+    const mediaKey = createMediaKey('imported');
+    await saveMediaBlob(mediaKey, blob);
+    zipPathToMediaKey.set(zipEntry.name, mediaKey);
+    // Also map without leading path or with alternative slashes
+    const baseName = zipEntry.name.replace(/^media\//, '');
+    zipPathToMediaKey.set(baseName, mediaKey);
+  }
+
+  // Restore media references in state
+  const restoreUrl = (url?: string): string => {
+    if (!url) return '';
+    if (zipPathToMediaKey.has(url)) {
+      return zipPathToMediaKey.get(url)!;
+    }
+    const cleanName = url.replace(/^(\.\/|media\/|\/media\/)/, '');
+    if (zipPathToMediaKey.has(cleanName)) {
+      return zipPathToMediaKey.get(cleanName)!;
+    }
+    return url;
+  };
+
+  for (const profile of parsedState.profiles) {
+    for (const item of profile.items) {
+      if (item.type === 'slideshow' && item.config) {
+        const cfg = item.config as { images?: Array<{ id: string; url: string; caption?: string }> };
+        if (Array.isArray(cfg.images)) {
+          for (const img of cfg.images) {
+            img.url = restoreUrl(img.url);
+          }
+        }
+      } else if (item.type === 'text-slide' && item.config) {
+        const cfg = item.config as { backgroundImage?: string };
+        if (cfg.backgroundImage) {
+          cfg.backgroundImage = restoreUrl(cfg.backgroundImage);
+        }
+      }
+    }
+  }
+
+  return {
+    ...parsedState,
+    version: 1,
+  };
+}
+
 export function importPartyStateFromJson(jsonStr: string): PartyState {
   const parsed = JSON.parse(jsonStr) as PartyState;
   if (!parsed || !parsed.profiles || !Array.isArray(parsed.profiles)) {
@@ -220,3 +413,4 @@ export function importPartyStateFromJson(jsonStr: string): PartyState {
     version: 1,
   };
 }
+

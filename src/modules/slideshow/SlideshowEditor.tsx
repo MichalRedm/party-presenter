@@ -4,6 +4,51 @@ import { Input } from '../../components/ui/Input';
 import { Toggle } from '../../components/ui/Toggle';
 import { SlideshowConfig, SlideshowImage } from './SlideshowProjector';
 import { Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
+import { saveMediaBlob, createMediaKey, requestPersistentStorage } from '../../services/mediaStorage';
+import { useResolvedMediaUrl } from '../../hooks/useResolvedMediaUrl';
+
+// Separate item component to cleanly hook useResolvedMediaUrl for each thumbnail
+const SlideshowEditorItem: React.FC<{
+  img: SlideshowImage;
+  idx: number;
+  onUpdateCaption: (id: string, caption: string) => void;
+  onRemove: (id: string) => void;
+}> = ({ img, idx, onUpdateCaption, onRemove }) => {
+  const resolvedUrl = useResolvedMediaUrl(img.url);
+
+  return (
+    <div className="flex items-center gap-3 p-3 bg-slate-900 border border-slate-800 rounded-xl">
+      <div className="w-16 h-12 rounded-lg bg-slate-950 overflow-hidden shrink-0 border border-white/10 flex items-center justify-center">
+        {resolvedUrl ? (
+          <img src={resolvedUrl} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <ImageIcon className="w-6 h-6 text-slate-600" />
+        )}
+      </div>
+
+      <div className="flex-1">
+        <span className="text-xs text-slate-500 font-bold">#{idx + 1}</span>
+        <input
+          type="text"
+          value={img.caption || ''}
+          placeholder="Wpisz podpis..."
+          onChange={e => onUpdateCaption(img.id, e.target.value)}
+          className="w-full bg-transparent text-sm text-slate-200 focus:outline-none border-b border-transparent focus:border-purple-500"
+        />
+      </div>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onRemove(img.id)}
+        className="text-rose-400 hover:text-rose-300"
+        aria-label="Usuń zdjęcie"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+};
 
 export const SlideshowEditor: React.FC<{
   config: SlideshowConfig;
@@ -11,6 +56,7 @@ export const SlideshowEditor: React.FC<{
 }> = ({ config, onChange }) => {
   const [newUrl, setNewUrl] = useState('');
   const [newCaption, setNewCaption] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const images = config.images || [];
@@ -27,23 +73,36 @@ export const SlideshowEditor: React.FC<{
     setNewCaption('');
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        const newImage: SlideshowImage = {
-          id: `img_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-          url: reader.result,
-          caption: newCaption.trim() || undefined,
-        };
-        onChange({ ...config, images: [...images, newImage] });
-        setNewCaption('');
+    setIsUploading(true);
+    try {
+      // Ensure storage persistence is requested
+      await requestPersistentStorage();
+
+      // Save directly to IndexedDB media store
+      const mediaKey = createMediaKey('slideshow');
+      await saveMediaBlob(mediaKey, file);
+
+      const newImage: SlideshowImage = {
+        id: `img_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        url: mediaKey,
+        caption: newCaption.trim() || undefined,
+      };
+
+      onChange({ ...config, images: [...images, newImage] });
+      setNewCaption('');
+    } catch (err) {
+      console.error('Failed to save uploaded image to IndexedDB:', err);
+      alert('Nie udało się zapisać zdjęcia w magazynie przeglądarki.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleRemoveImage = (id: string) => {
@@ -133,8 +192,9 @@ export const SlideshowEditor: React.FC<{
             size="sm"
             onClick={() => fileInputRef.current?.click()}
             icon={<Upload className="w-4 h-4" />}
+            disabled={isUploading}
           >
-            Wgraj z dysku
+            {isUploading ? 'Zapisywanie w pamięci...' : 'Wgraj z dysku'}
           </Button>
         </div>
       </div>
@@ -150,39 +210,13 @@ export const SlideshowEditor: React.FC<{
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
             {images.map((img, idx) => (
-              <div
+              <SlideshowEditorItem
                 key={img.id}
-                className="flex items-center gap-3 p-3 bg-slate-900 border border-slate-800 rounded-xl"
-              >
-                <div className="w-16 h-12 rounded-lg bg-slate-950 overflow-hidden shrink-0 border border-white/10 flex items-center justify-center">
-                  {img.url ? (
-                    <img src={img.url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImageIcon className="w-6 h-6 text-slate-600" />
-                  )}
-                </div>
-
-                <div className="flex-1">
-                  <span className="text-xs text-slate-500 font-bold">#{idx + 1}</span>
-                  <input
-                    type="text"
-                    value={img.caption || ''}
-                    placeholder="Wpisz podpis..."
-                    onChange={e => handleUpdateCaption(img.id, e.target.value)}
-                    className="w-full bg-transparent text-sm text-slate-200 focus:outline-none border-b border-transparent focus:border-purple-500"
-                  />
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveImage(img.id)}
-                  className="text-rose-400 hover:text-rose-300"
-                  aria-label="Usuń zdjęcie"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
+                img={img}
+                idx={idx}
+                onUpdateCaption={handleUpdateCaption}
+                onRemove={handleRemoveImage}
+              />
             ))}
           </div>
         )}

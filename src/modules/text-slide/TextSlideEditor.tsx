@@ -1,27 +1,39 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Input, Textarea } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { TextSlideConfig } from './TextSlideProjector';
 import { Image, Upload, Trash2 } from 'lucide-react';
+import { saveMediaBlob, createMediaKey, requestPersistentStorage } from '../../services/mediaStorage';
+import { useResolvedMediaUrl } from '../../hooks/useResolvedMediaUrl';
 
 export const TextSlideEditor: React.FC<{
   config: TextSlideConfig;
   onChange: (updatedConfig: TextSlideConfig) => void;
 }> = ({ config, onChange }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const resolvedBgUrl = useResolvedMediaUrl(config.backgroundImage);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        onChange({ ...config, backgroundImage: reader.result });
+    setIsUploading(true);
+    try {
+      await requestPersistentStorage();
+      const mediaKey = createMediaKey('bg');
+      await saveMediaBlob(mediaKey, file);
+      onChange({ ...config, backgroundImage: mediaKey });
+    } catch (err) {
+      console.error('Failed to save background image to IndexedDB:', err);
+      alert('Nie udało się zapisać zdjęcia w magazynie przeglądarki.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -109,11 +121,23 @@ export const TextSlideEditor: React.FC<{
             size="sm"
             onClick={() => fileInputRef.current?.click()}
             icon={<Upload className="w-4 h-4" />}
+            disabled={isUploading}
           >
-            Wgraj zdjęcie z komputera
+            {isUploading ? 'Zapisywanie w pamięci...' : 'Wgraj zdjęcie z komputera'}
           </Button>
           <span className="text-xs text-slate-400">JPG, PNG, WebP do 10MB</span>
         </div>
+
+        {resolvedBgUrl && (
+          <div className="flex items-center gap-3 p-2 bg-slate-900 border border-slate-800 rounded-lg">
+            <div className="w-16 h-10 rounded overflow-hidden bg-slate-950 border border-white/10 shrink-0">
+              <img src={resolvedBgUrl} alt="Podgląd tła" className="w-full h-full object-cover" />
+            </div>
+            <div className="text-xs text-slate-400 truncate">
+              {config.backgroundImage?.startsWith('media:') ? 'Zdjęcie zapisane w trwałym magazynie przeglądarki' : config.backgroundImage}
+            </div>
+          </div>
+        )}
 
         {config.backgroundImage && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-800">

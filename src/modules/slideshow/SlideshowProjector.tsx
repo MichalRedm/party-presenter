@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useResolvedMediaUrl } from '../../hooks/useResolvedMediaUrl';
 
 export interface SlideshowImage {
   id: string;
@@ -31,7 +32,10 @@ export const SlideshowProjector: React.FC<{
     return () => clearInterval(interval);
   }, [isActive, autoPlay, images.length, intervalSeconds]);
 
-  if (images.length === 0) {
+  const currentImg = images[currentIndex] || images[0];
+  const resolvedCurrentUrl = useResolvedMediaUrl(currentImg?.url);
+
+  if (images.length === 0 || !currentImg) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
         <p className="text-3xl font-bold mb-2">Brak zdjęć w pokazie slajdów</p>
@@ -39,8 +43,6 @@ export const SlideshowProjector: React.FC<{
       </div>
     );
   }
-
-  const currentImg = images[currentIndex] || images[0];
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -55,19 +57,23 @@ export const SlideshowProjector: React.FC<{
   return (
     <div className="relative w-full h-full flex items-center justify-center overflow-hidden select-none bg-black">
       {/* Blurred Ambient Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 transition-all duration-1000"
-        style={{ backgroundImage: `url(${currentImg.url})` }}
-      />
+      {resolvedCurrentUrl && (
+        <div
+          className="absolute inset-0 bg-cover bg-center blur-2xl opacity-40 scale-110 transition-all duration-1000"
+          style={{ backgroundImage: `url(${resolvedCurrentUrl})` }}
+        />
+      )}
 
       {/* Main Image */}
       <div className="relative z-10 max-w-6xl max-h-[82vh] p-4 flex flex-col items-center justify-center">
-        <img
-          key={currentImg.id}
-          src={currentImg.url}
-          alt={currentImg.caption || 'Zdjęcie'}
-          className="max-h-[72vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/10 animate-in fade-in zoom-in-95 duration-500"
-        />
+        {resolvedCurrentUrl && (
+          <img
+            key={currentImg.id}
+            src={resolvedCurrentUrl}
+            alt={currentImg.caption || 'Zdjęcie'}
+            className="max-h-[72vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/10 animate-in fade-in zoom-in-95 duration-500"
+          />
+        )}
 
         {currentImg.caption && (
           <div className="mt-4 px-6 py-2.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 text-white text-xl md:text-2xl font-semibold tracking-wide text-center drop-shadow-md">

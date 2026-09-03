@@ -27,6 +27,8 @@ Deliver and maintain the full Party Presenter presentation application running o
 - [x] High-contrast fullscreen Projector view with keyboard shortcuts (`Space`, `Arrows`, `F`, `H`, `M`, `C`, `T`), inactivity auto-hiding controls (2.5s) and cursor hiding in fullscreen mode.
 - [x] Comprehensive Admin panel & live remote controller (`/admin`).
 - [x] Dedicated Spymasters view for Codenames (`/spymaster`).
+- [x] IndexedDB binary media storage with `navigator.storage.persist()` to eliminate `localStorage` 5MB quota crashes.
+- [x] Clean, AI-friendly ZIP export/import (`.party` / `.zip`) bundling `party.json` + `media/` folder alongside backward-compatible JSON imports.
 - [x] Clean build and zero-warning lint verification (`npm run build`, `npm run lint`).
 - [x] Automated GitHub Actions CI workflow for linting, typechecking, and production builds (`.github/workflows/ci.yml`).
 

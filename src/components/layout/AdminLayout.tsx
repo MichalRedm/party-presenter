@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParty } from '../../context/PartyContext';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
@@ -15,7 +15,11 @@ import {
   RotateCcw,
   KeyRound,
   ExternalLink,
+  Archive,
+  Database,
+  CheckCircle2,
 } from 'lucide-react';
+import { checkStoragePersistence, requestPersistentStorage } from '../../services/mediaStorage';
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
@@ -25,7 +29,8 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     setSoundConfig,
     triggerConfetti,
     exportState,
-    importState,
+    exportPackage,
+    importPackage,
     resetToDefault,
     loadProfile,
     createNewProfile,
@@ -33,25 +38,63 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
+  const [isExportingPackage, setIsExportingPackage] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [storageInfo, setStorageInfo] = useState<{ persisted: boolean; usageMb?: number }>({ persisted: false });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    checkStoragePersistence().then(info => {
+      setStorageInfo({
+        persisted: info.persisted,
+        usageMb: info.usageBytes ? Math.round(info.usageBytes / (1024 * 1024)) : undefined,
+      });
+    });
+  }, [isExportModalOpen]);
+
+  const handleRequestPersistence = async () => {
+    const res = await requestPersistentStorage();
+    setStorageInfo({
+      persisted: res.persisted,
+      usageMb: res.usageBytes ? Math.round(res.usageBytes / (1024 * 1024)) : undefined,
+    });
+    if (res.persisted) {
+      alert('Pamięć trwała została przyznana przez przeglądarkę! Twoje zdjęcia nie zostaną usunięte.');
+    } else {
+      alert('Przeglądarka działa w standardowym trybie pamięci.');
+    }
+  };
+
+  const handleExportPackage = async () => {
+    setIsExportingPackage(true);
+    try {
+      await exportPackage();
+    } catch (err) {
+      console.error('Export package error:', err);
+      alert('Wystąpił błąd podczas pakowania paczki imprezy.');
+    } finally {
+      setIsExportingPackage(false);
+    }
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const text = reader.result as string;
-        const parsed = JSON.parse(text);
-        importState(parsed);
-        alert('Pomyślnie wczytano konfigurację imprezy!');
-        setIsExportModalOpen(false);
-      } catch {
-        alert('Błąd podczas odczytu pliku JSON. Upewnij się, że plik jest poprawny.');
+    setIsImporting(true);
+    try {
+      await importPackage(file);
+      alert('Pomyślnie wczytano konfigurację imprezy i zaimportowano zdjęcia!');
+      setIsExportModalOpen(false);
+    } catch (err) {
+      console.error('Import error:', err);
+      alert('Błąd podczas odczytu pliku: ' + (err instanceof Error ? err.message : 'Nieprawidłowy plik'));
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-    };
-    reader.readAsText(file);
+    }
   };
 
   const handleCreateProfile = () => {
@@ -193,29 +236,62 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             </div>
           </div>
 
-          {/* Export & Import JSON */}
-          <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800 space-y-3">
-            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Eksport / Import konfiguracji (Plik JSON)
-            </h4>
-            <p className="text-xs text-slate-400">
-              Pobierz plik z całą zaplanowaną imprezą (harmonogram, hasła Tajniaków, pytania z Gorącego Krzesła) na dysk lub wczytaj go na innym komputerze.
+          {/* Storage Persistence Status Card */}
+          <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800 flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-purple-400" />
+                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                  Trwałość Pamięci Przeglądarki (IndexedDB)
+                </h4>
+              </div>
+              <p className="text-xs text-slate-400">
+                {storageInfo.persisted ? (
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Pamięć trwała aktywna — Twoje wgrane zdjęcia nie zostaną automatycznie usunięte przez przeglądarkę.
+                  </span>
+                ) : (
+                  <span>Przeglądarka może zarządzać pamięcią tymczasowo. Kliknij, aby wymusić trwałe zachowanie zdjęć.</span>
+                )}
+                {typeof storageInfo.usageMb === 'number' && (
+                  <span className="text-slate-500 ml-2">({storageInfo.usageMb} MB zużycia)</span>
+                )}
+              </p>
+            </div>
+            {!storageInfo.persisted && (
+              <Button size="sm" variant="outline" onClick={handleRequestPersistence}>
+                Wymuś pamięć trwałą
+              </Button>
+            )}
+          </div>
+
+          {/* Export & Import Complete Party Package (.party / .zip) */}
+          <div className="p-4 bg-gradient-to-br from-purple-950/40 via-slate-950 to-slate-950 rounded-xl border border-purple-800/40 space-y-3">
+            <div className="flex items-center gap-2">
+              <Archive className="w-4 h-4 text-purple-400" />
+              <h4 className="text-xs font-bold text-purple-200 uppercase tracking-wider">
+                Kompletna Paczka Imprezy (.party / .zip) — Rekomendowana
+              </h4>
+            </div>
+            <p className="text-xs text-slate-300">
+              Tworzy archiwum ZIP zawierające czysty, czytelny dla AI plik <strong className="text-white">party.json</strong> oraz folder ze wszystkimi wgranymi zdjęciami (<strong className="text-white">media/</strong>). Idealne do rozwijania imprezy z agentem AI i przenoszenia na inny laptop.
             </p>
 
             <div className="flex flex-wrap gap-3">
               <Button
                 variant="primary"
                 size="sm"
-                onClick={exportState}
-                icon={<Download className="w-4 h-4" />}
+                onClick={handleExportPackage}
+                icon={<Archive className="w-4 h-4" />}
+                disabled={isExportingPackage}
               >
-                Pobierz kopię JSON
+                {isExportingPackage ? 'Pakowanie archiwum ZIP...' : 'Pobierz paczkę (.party)'}
               </Button>
 
               <input
                 type="file"
                 ref={fileInputRef}
-                accept=".json"
+                accept=".party,.zip,.json"
                 className="hidden"
                 onChange={handleImportFile}
               />
@@ -224,8 +300,31 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 icon={<Upload className="w-4 h-4" />}
+                disabled={isImporting}
               >
-                Wczytaj plik JSON
+                {isImporting ? 'Rozpakowywanie i importowanie...' : 'Wczytaj paczkę (.party, .zip lub .json)'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Legacy Export JSON */}
+          <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800 space-y-3">
+            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              Szybka Kopia Tekstowa (Pojedynczy plik JSON)
+            </h4>
+            <p className="text-xs text-slate-400">
+              Pobiera wyłącznie plik tekstowy JSON. Jeśli zdjęcia są wgrane w pamięci przeglądarki, pobierz paczkę powyżej, aby przenieść również pliki zdjęć.
+            </p>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={exportState}
+                icon={<Download className="w-4 h-4" />}
+                className="border border-slate-800"
+              >
+                Pobierz sam plik JSON
               </Button>
             </div>
           </div>
