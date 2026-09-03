@@ -88,4 +88,6 @@ Always run these commands from the repository root:
   - `project_context.md`: Detailed architecture, environment setup, and active roadmap status
   - `rules/`: Modular declarative rules and coding standards
   - `context/`: Deep domain architecture and data models specifications
-  - `skills/`: Autonomous workspace maintenance skill
+  - `skills/`: Autonomous skills
+    - `agent-maintenance/`: Autonomous workspace maintenance skill
+    - `party-package-manager/`: Data format, JSON schema, and AI workflow guide for `.party` / `.zip` bundles

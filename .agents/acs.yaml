@@ -48,6 +48,8 @@ layers:
   skills:
     - path: "./skills/agent-maintenance/SKILL.md"
       description: "Autonomous .agents/ context maintenance workflow."
+    - path: "./skills/party-package-manager/SKILL.md"
+      description: "Format definition and workflows for Party Presenter .party/.zip bundles and party.json files."
 metadata:
   primary_agent: "Antigravity"
   objective: "Build and deploy the full Party Presenter application with complete module suite and real-time projector sync."
