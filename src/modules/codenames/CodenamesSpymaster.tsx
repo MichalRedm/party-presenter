@@ -77,6 +77,12 @@ export const CodenamesSpymaster: React.FC<{
             roleBadge = 'Zabójca';
           }
 
+          const getSpymasterWordSize = (word: string) => {
+            if (word.length >= 12) return 'text-[9px] md:text-xs leading-none';
+            if (word.length >= 10) return 'text-[10px] md:text-xs leading-tight';
+            return 'text-xs md:text-sm leading-tight';
+          };
+
           return (
             <div
               key={card.id}
@@ -94,7 +100,7 @@ export const CodenamesSpymaster: React.FC<{
                 <Skull className="w-4 h-4 absolute top-1.5 left-1.5 text-rose-500" />
               )}
 
-              <span className={`text-xs md:text-sm font-black tracking-wide break-words ${card.revealed ? 'line-through' : ''}`}>
+              <span className={`${getSpymasterWordSize(card.word)} font-black tracking-wide break-words ${card.revealed ? 'line-through' : ''}`}>
                 {card.word}
               </span>
 

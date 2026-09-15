@@ -169,9 +169,15 @@ export const CodenamesProjector: React.FC<{
             revealedBg = 'bg-gradient-to-br from-zinc-900 to-black border-rose-600 text-rose-400 ring-2 ring-rose-600 shadow-2xl shadow-rose-950';
             roleIcon = <Skull className="w-6 h-6 animate-pulse" />;
           } else {
-            // Neutral / Tan bystander
-            revealedBg = 'bg-amber-950/60 border-amber-700/60 text-amber-200/80';
+            // Neutral / Tan bystander (removed /60 to fix transparency bug)
+            revealedBg = 'bg-amber-950 border-amber-700/60 text-amber-200/80';
           }
+
+          const getWordSizeClass = (word: string, isBack: boolean = false) => {
+            if (word.length >= 13) return isBack ? 'text-[10px] md:text-xs lg:text-sm leading-none' : 'text-xs md:text-sm lg:text-base leading-none';
+            if (word.length >= 10) return isBack ? 'text-xs md:text-sm lg:text-base leading-tight' : 'text-sm md:text-base lg:text-lg leading-tight';
+            return isBack ? 'text-sm md:text-lg lg:text-xl leading-tight' : 'text-base md:text-xl lg:text-2xl leading-tight';
+          };
 
           return (
             <div
@@ -185,8 +191,8 @@ export const CodenamesProjector: React.FC<{
                 }`}
               >
                 {/* Front (Hidden / Word view) */}
-                <div className="absolute inset-0 backface-hidden flex items-center justify-center p-3 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-white/20 shadow-xl hover:border-purple-400/50 transition-all">
-                  <span className="text-base md:text-xl lg:text-2xl font-black text-white tracking-wider text-center break-words drop-shadow">
+                <div className="absolute inset-0 backface-hidden flex items-center justify-center p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-white/20 shadow-xl hover:border-purple-400/50 transition-all">
+                  <span className={`${getWordSizeClass(card.word, false)} font-black text-white tracking-wider text-center break-words drop-shadow`}>
                     {card.word}
                   </span>
                 </div>
@@ -195,7 +201,7 @@ export const CodenamesProjector: React.FC<{
                 <div
                   className={`absolute inset-0 backface-hidden rotate-y-180 flex flex-col items-center justify-center p-3 rounded-2xl border shadow-xl ${revealedBg}`}
                 >
-                  <span className="text-sm md:text-lg lg:text-xl font-black tracking-wide text-center uppercase drop-shadow line-through opacity-80">
+                  <span className={`${getWordSizeClass(card.word, true)} font-black tracking-wide text-center uppercase drop-shadow line-through opacity-80`}>
                     {card.word}
                   </span>
                   {roleIcon}
