@@ -1,4 +1,7 @@
-export type CodenamesRole = 'red' | 'blue' | 'neutral' | 'assassin';
+export type CodenamesRole = 'red' | 'blue' | 'green' | 'neutral' | 'assassin';
+
+export type CodenamesGameMode = 'standard' | '3-team-elegant' | '3-team-epic';
+export type CodenamesAssassinRule = 'standard' | 'sudden-death';
 
 export interface CodenamesCard {
   id: number;
@@ -13,13 +16,17 @@ export interface CodenamesClue {
 }
 
 export interface CodenamesConfig {
+  gameMode?: CodenamesGameMode;
+  assassinRule?: CodenamesAssassinRule;
   cards: CodenamesCard[];
-  startingTeam: 'red' | 'blue';
-  currentTurn: 'red' | 'blue';
+  startingTeam: 'red' | 'blue' | 'green';
+  currentTurn: 'red' | 'blue' | 'green';
   redScore: number;
   blueScore: number;
-  winner: 'red' | 'blue' | null;
+  greenScore?: number;
+  winner: 'red' | 'blue' | 'green' | null;
   assassinTriggered: boolean;
+  eliminatedTeams?: ('red' | 'blue' | 'green')[];
   timerSeconds: number;
   initialTimerSeconds: number;
   isTimerRunning: boolean;

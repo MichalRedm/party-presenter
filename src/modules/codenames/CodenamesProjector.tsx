@@ -48,6 +48,10 @@ export const CodenamesProjector: React.FC<{
 
   const totalRed = cards.filter(c => c.role === 'red').length;
   const totalBlue = cards.filter(c => c.role === 'blue').length;
+  const totalGreen = cards.filter(c => c.role === 'green').length;
+  const is3Team = config.gameMode === '3-team-elegant' || config.gameMode === '3-team-epic';
+  const isEpic = config.gameMode === '3-team-epic';
+  const eliminated = config.eliminatedTeams || [];
 
   const handleCardClick = (card: CodenamesCard) => {
     if (card.revealed || winner || !activeItem) return;
@@ -58,16 +62,20 @@ export const CodenamesProjector: React.FC<{
   const timerMins = Math.floor(timerSeconds / 60);
   const timerSecs = timerSeconds % 60;
 
+  const currentTurnName = currentTurn === 'red' ? 'Czerwoni' : (currentTurn === 'blue' ? 'Niebiescy' : 'Zieloni');
+  const currentTurnColor = currentTurn === 'red' ? 'text-rose-400' : (currentTurn === 'blue' ? 'text-blue-400' : 'text-emerald-400');
+  const winnerName = winner === 'red' ? 'CZERWONYCH' : (winner === 'blue' ? 'NIEBIESKICH' : 'ZIELONYCH');
+
   return (
     <div className="relative w-full h-full flex flex-col justify-between p-6 md:p-10 select-none max-w-7xl mx-auto z-10">
       {/* Top Game Bar */}
       <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-white/10 shadow-2xl">
         {/* Red Team Score */}
-        <div className={`flex items-center gap-3 px-6 py-2.5 rounded-xl border transition-all ${
+        <div className={`flex items-center gap-3 px-4 md:px-6 py-2.5 rounded-xl border transition-all ${
           currentTurn === 'red' && !winner
             ? 'bg-rose-950/80 border-rose-500 ring-2 ring-rose-500/50 shadow-lg shadow-rose-600/30'
             : 'bg-slate-950/60 border-rose-500/30'
-        }`}>
+        } ${eliminated.includes('red') ? 'opacity-30 grayscale' : ''}`}>
           <div className="w-4 h-4 rounded-full bg-rose-500 animate-pulse" />
           <div className="flex flex-col">
             <span className="text-xs font-bold text-rose-300 uppercase tracking-wider">Czerwoni</span>
@@ -82,14 +90,14 @@ export const CodenamesProjector: React.FC<{
           {winner ? (
             <div className="flex items-center gap-2 px-6 py-2 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-300 font-bold text-lg animate-bounce">
               <Crown className="w-5 h-5 text-amber-400" />
-              <span>ZWYCIĘSTWO DRUŻYNY {winner === 'red' ? 'CZERWONYCH' : 'NIEBIESKICH'}!</span>
+              <span>ZWYCIĘSTWO DRUŻYNY {winnerName}!</span>
             </div>
           ) : (
             <div className="space-y-1">
               <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/10 text-white font-black text-base md:text-lg tracking-wider uppercase">
                 <span>Tura:</span>
-                <span className={currentTurn === 'red' ? 'text-rose-400 font-extrabold' : 'text-blue-400 font-extrabold'}>
-                  {currentTurn === 'red' ? 'Czerwoni' : 'Niebiescy'}
+                <span className={`${currentTurnColor} font-extrabold`}>
+                  {currentTurnName}
                 </span>
               </div>
 
@@ -102,8 +110,8 @@ export const CodenamesProjector: React.FC<{
           )}
         </div>
 
-        {/* Turn Timer & Blue Team Score */}
-        <div className="flex items-center gap-4">
+        {/* Turn Timer & Blue & Green Team Score */}
+        <div className="flex items-center gap-2 md:gap-4">
           <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-slate-200">
             <Timer className={`w-4 h-4 ${timerSeconds <= 10 && isTimerRunning ? 'text-rose-400 animate-spin' : 'text-slate-400'}`} />
             <span className={`font-mono text-xl font-bold ${timerSeconds <= 10 && isTimerRunning ? 'text-rose-400 animate-pulse' : 'text-slate-100'}`}>
@@ -111,11 +119,11 @@ export const CodenamesProjector: React.FC<{
             </span>
           </div>
 
-          <div className={`flex items-center gap-3 px-6 py-2.5 rounded-xl border transition-all ${
+          <div className={`flex items-center gap-3 px-4 md:px-6 py-2.5 rounded-xl border transition-all ${
             currentTurn === 'blue' && !winner
               ? 'bg-blue-950/80 border-blue-500 ring-2 ring-blue-500/50 shadow-lg shadow-blue-600/30'
               : 'bg-slate-950/60 border-blue-500/30'
-          }`}>
+          } ${eliminated.includes('blue') ? 'opacity-30 grayscale' : ''}`}>
             <div className="flex flex-col text-right">
               <span className="text-xs font-bold text-blue-300 uppercase tracking-wider">Niebiescy</span>
               <span className="text-2xl font-mono font-black text-blue-100">
@@ -124,11 +132,27 @@ export const CodenamesProjector: React.FC<{
             </div>
             <div className="w-4 h-4 rounded-full bg-blue-500 animate-pulse" />
           </div>
+
+          {is3Team && (
+             <div className={`flex items-center gap-3 px-4 md:px-6 py-2.5 rounded-xl border transition-all ${
+               currentTurn === 'green' && !winner
+                 ? 'bg-emerald-950/80 border-emerald-500 ring-2 ring-emerald-500/50 shadow-lg shadow-emerald-600/30'
+                 : 'bg-slate-950/60 border-emerald-500/30'
+             } ${eliminated.includes('green') ? 'opacity-30 grayscale' : ''}`}>
+               <div className="flex flex-col text-right">
+                 <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Zieloni</span>
+                 <span className="text-2xl font-mono font-black text-emerald-100">
+                   {config.greenScore || 0} / {totalGreen}
+                 </span>
+               </div>
+               <div className="w-4 h-4 rounded-full bg-emerald-500 animate-pulse" />
+             </div>
+          )}
         </div>
       </div>
 
-      {/* 5x5 Cards Board */}
-      <div className="grid grid-cols-5 gap-3 md:gap-4 my-auto py-4">
+      {/* Cards Board */}
+      <div className={`grid ${isEpic ? 'grid-cols-6 gap-2 md:gap-3 py-2' : 'grid-cols-5 gap-3 md:gap-4 py-4'} my-auto`}>
         {cards.map(card => {
           const isRevealed = card.revealed;
 
@@ -139,6 +163,8 @@ export const CodenamesProjector: React.FC<{
             revealedBg = 'bg-gradient-to-br from-rose-600 to-red-800 border-rose-400 text-white shadow-lg shadow-rose-600/50';
           } else if (card.role === 'blue') {
             revealedBg = 'bg-gradient-to-br from-blue-600 to-indigo-800 border-blue-400 text-white shadow-lg shadow-blue-600/50';
+          } else if (card.role === 'green') {
+            revealedBg = 'bg-gradient-to-br from-emerald-600 to-green-800 border-emerald-400 text-white shadow-lg shadow-emerald-600/50';
           } else if (card.role === 'assassin') {
             revealedBg = 'bg-gradient-to-br from-zinc-900 to-black border-rose-600 text-rose-400 ring-2 ring-rose-600 shadow-2xl shadow-rose-950';
             roleIcon = <Skull className="w-6 h-6 animate-pulse" />;

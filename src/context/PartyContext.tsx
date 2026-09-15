@@ -504,16 +504,51 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
         // Count scores
         const redScore = updatedCards.filter(c => c.role === 'red' && c.revealed).length;
         const blueScore = updatedCards.filter(c => c.role === 'blue' && c.revealed).length;
+        const greenScore = updatedCards.filter(c => c.role === 'green' && c.revealed).length;
         const totalRed = updatedCards.filter(c => c.role === 'red').length;
         const totalBlue = updatedCards.filter(c => c.role === 'blue').length;
+        const totalGreen = updatedCards.filter(c => c.role === 'green').length;
 
-        let winner: 'red' | 'blue' | null = null;
-        let assassinTriggered = false;
+        let winner: 'red' | 'blue' | 'green' | null = currentConfig.winner;
+        let assassinTriggered = currentConfig.assassinTriggered;
+        const eliminatedTeams = [...(currentConfig.eliminatedTeams || [])];
+        let nextTurn = currentConfig.currentTurn;
+
+        const availableTeams: ('red' | 'blue' | 'green')[] = currentConfig.gameMode === 'standard' || !currentConfig.gameMode ? ['red', 'blue'] : ['red', 'blue', 'green'];
+
+        const advanceTurn = (current: 'red' | 'blue' | 'green') => {
+          let next = current;
+          do {
+             if (next === 'red') next = 'blue';
+             else if (next === 'blue') next = availableTeams.includes('green') ? 'green' : 'red';
+             else next = 'red';
+          } while (eliminatedTeams.includes(next));
+          return next;
+        };
 
         if (targetCard.role === 'assassin') {
           assassinTriggered = true;
-          winner = currentConfig.currentTurn === 'red' ? 'blue' : 'red';
           soundEngine.playBuzzer();
+
+          if (currentConfig.assassinRule === 'sudden-death' && availableTeams.length > 2) {
+            eliminatedTeams.push(currentConfig.currentTurn);
+            const remainingTeams = availableTeams.filter(t => !eliminatedTeams.includes(t));
+            if (remainingTeams.length === 1) {
+              winner = remainingTeams[0];
+              soundEngine.playVictory();
+              firePartyConfetti();
+            } else {
+              nextTurn = advanceTurn(currentConfig.currentTurn);
+            }
+          } else {
+             // Standard: game over, other team wins (if 2 teams) or no winner
+             if (availableTeams.length === 2) {
+                winner = currentConfig.currentTurn === 'red' ? 'blue' : 'red';
+             } else {
+                // If standard rule on 3 teams: the other two win? Or just no winner.
+                winner = null;
+             }
+          }
         } else if (redScore >= totalRed) {
           winner = 'red';
           soundEngine.playVictory();
@@ -522,12 +557,14 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
           winner = 'blue';
           soundEngine.playVictory();
           firePartyConfetti();
+        } else if (totalGreen > 0 && greenScore >= totalGreen) {
+          winner = 'green';
+          soundEngine.playVictory();
+          firePartyConfetti();
         }
 
-        // Turn change if wrong role picked
-        let nextTurn = currentConfig.currentTurn;
-        if (targetCard.role !== currentConfig.currentTurn && !winner) {
-          nextTurn = currentConfig.currentTurn === 'red' ? 'blue' : 'red';
+        if (!winner && targetCard.role !== currentConfig.currentTurn && targetCard.role !== 'assassin') {
+          nextTurn = advanceTurn(currentConfig.currentTurn);
         }
 
         const newConfig: CodenamesConfig = {
@@ -535,14 +572,29 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
           cards: updatedCards,
           redScore,
           blueScore,
+          greenScore: currentConfig.gameMode && currentConfig.gameMode !== 'standard' ? greenScore : undefined,
           winner,
           assassinTriggered,
+          eliminatedTeams,
           currentTurn: nextTurn,
         };
 
         updateItemConfig(itemId, newConfig as unknown as Record<string, unknown>);
       } else if (action === 'next_turn') {
-        const nextTurn = currentConfig.currentTurn === 'red' ? 'blue' : 'red';
+        const availableTeams: ('red' | 'blue' | 'green')[] = currentConfig.gameMode === 'standard' || !currentConfig.gameMode ? ['red', 'blue'] : ['red', 'blue', 'green'];
+        const eliminatedTeams = currentConfig.eliminatedTeams || [];
+        
+        const advanceTurn = (current: 'red' | 'blue' | 'green') => {
+          let next = current;
+          do {
+             if (next === 'red') next = 'blue';
+             else if (next === 'blue') next = availableTeams.includes('green') ? 'green' : 'red';
+             else next = 'red';
+          } while (eliminatedTeams.includes(next));
+          return next;
+        };
+
+        const nextTurn = advanceTurn(currentConfig.currentTurn);
         soundEngine.playDing();
         updateItemConfig(itemId, {
           ...currentConfig,
@@ -562,7 +614,7 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
           isTimerRunning: false,
         } as unknown as Record<string, unknown>);
       } else if (action === 'new_game') {
-        const freshBoard = generateCodenamesBoard(currentConfig.customWordBank || []);
+        const freshBoard = generateCodenamesBoard(currentConfig.customWordBank || [], undefined, currentConfig.gameMode, currentConfig.assassinRule);
         soundEngine.playFanfare();
         updateItemConfig(itemId, freshBoard as unknown as Record<string, unknown>);
       } else if (action === 'update_clue' && payload?.clueWord) {

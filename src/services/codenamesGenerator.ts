@@ -39,31 +39,62 @@ export function shuffleArray<T>(array: T[]): T[] {
  */
 export function generateCodenamesBoard(
   customWords: string[] = [],
-  startingTeamOverride?: 'red' | 'blue'
+  startingTeamOverride?: 'red' | 'blue' | 'green',
+  gameMode: CodenamesConfig['gameMode'] = 'standard',
+  assassinRule: CodenamesConfig['assassinRule'] = 'standard'
 ): CodenamesConfig {
   const combinedBank = Array.from(new Set([...customWords.map(w => w.toUpperCase().trim()), ...DEFAULT_POLISH_WORD_BANK])).filter(
     w => w.length > 0
   );
 
   const shuffledWords = shuffleArray(combinedBank);
-  const selectedWords = shuffledWords.slice(0, 25);
+  const totalCards = gameMode === '3-team-epic' ? 36 : 25;
+  const selectedWords = shuffledWords.slice(0, totalCards);
 
   // If words bank is too small, fallback
-  while (selectedWords.length < 25) {
+  while (selectedWords.length < totalCards) {
     selectedWords.push(`HASŁO_${selectedWords.length + 1}`);
   }
 
   // Determine starting team
-  const startingTeam: 'red' | 'blue' = startingTeamOverride || (Math.random() > 0.5 ? 'red' : 'blue');
-  const secondTeam: 'red' | 'blue' = startingTeam === 'red' ? 'blue' : 'red';
+  const availableTeams: ('red' | 'blue' | 'green')[] = gameMode === 'standard' ? ['red', 'blue'] : ['red', 'blue', 'green'];
+  const startingTeam = startingTeamOverride || availableTeams[Math.floor(Math.random() * availableTeams.length)];
 
-  // Role distribution: 9 for starter, 8 for second, 7 neutral, 1 assassin
-  const roles: CodenamesRole[] = [
-    ...Array(9).fill(startingTeam),
-    ...Array(8).fill(secondTeam),
-    ...Array(7).fill('neutral'),
-    'assassin',
-  ];
+  let roles: CodenamesRole[] = [];
+
+  if (gameMode === '3-team-epic') {
+    // 36 cards: 10, 9, 8, 8 neutral, 1 assassin
+    const t1 = startingTeam;
+    const t2 = t1 === 'red' ? 'blue' : (t1 === 'blue' ? 'green' : 'red');
+    const t3 = availableTeams.find(t => t !== t1 && t !== t2)!;
+    roles = [
+      ...Array(10).fill(t1),
+      ...Array(9).fill(t2),
+      ...Array(8).fill(t3),
+      ...Array(8).fill('neutral'),
+      'assassin',
+    ];
+  } else if (gameMode === '3-team-elegant') {
+    // 25 cards: 9, 8, 7, 1 assassin
+    const t1 = startingTeam;
+    const t2 = t1 === 'red' ? 'blue' : (t1 === 'blue' ? 'green' : 'red');
+    const t3 = availableTeams.find(t => t !== t1 && t !== t2)!;
+    roles = [
+      ...Array(9).fill(t1),
+      ...Array(8).fill(t2),
+      ...Array(7).fill(t3),
+      'assassin',
+    ];
+  } else {
+    // standard: 9, 8, 7 neutral, 1 assassin
+    const secondTeam = startingTeam === 'red' ? 'blue' : 'red';
+    roles = [
+      ...Array(9).fill(startingTeam),
+      ...Array(8).fill(secondTeam),
+      ...Array(7).fill('neutral'),
+      'assassin',
+    ];
+  }
 
   const shuffledRoles = shuffleArray(roles);
 
@@ -75,13 +106,17 @@ export function generateCodenamesBoard(
   }));
 
   return {
+    gameMode,
+    assassinRule,
     cards,
     startingTeam,
     currentTurn: startingTeam,
     redScore: 0,
     blueScore: 0,
+    greenScore: gameMode === 'standard' ? undefined : 0,
     winner: null,
     assassinTriggered: false,
+    eliminatedTeams: [],
     timerSeconds: 90,
     initialTimerSeconds: 90,
     isTimerRunning: false,

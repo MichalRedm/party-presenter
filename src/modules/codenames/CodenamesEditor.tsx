@@ -20,7 +20,7 @@ export const CodenamesEditor: React.FC<{
       .map(w => w.trim().toUpperCase())
       .filter(w => w.length > 0);
 
-    const freshBoard = generateCodenamesBoard(parsed, config.startingTeam);
+    const freshBoard = generateCodenamesBoard(parsed, config.startingTeam, config.gameMode, config.assassinRule);
     onChange({
       ...freshBoard,
       customWordBank: parsed,
@@ -39,13 +39,38 @@ export const CodenamesEditor: React.FC<{
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
+            label="Tryb gry"
+            value={config.gameMode || 'standard'}
+            options={[
+              { value: 'standard', label: '2 drużyny (25 kart)' },
+              { value: '3-team-elegant', label: '3 drużyny - elegancki (25 kart, 0 neutralnych)' },
+              { value: '3-team-epic', label: '3 drużyny - epicki (36 kart)' },
+            ]}
+            onChange={e => onChange({ ...config, gameMode: e.target.value as 'standard' | '3-team-elegant' | '3-team-epic' })}
+          />
+
+          <Select
+            label="Zasada Zabójcy"
+            value={config.assassinRule || 'standard'}
+            options={[
+              { value: 'standard', label: 'Natychmiastowy koniec gry' },
+              { value: 'sudden-death', label: 'Miękki Zabójca (eliminacja drużyny)' },
+            ]}
+            onChange={e => onChange({ ...config, assassinRule: e.target.value as 'standard' | 'sudden-death' })}
+          />
+
+          <Select
             label="Drużyna rozpoczynająca"
             value={config.startingTeam}
-            options={[
+            options={config.gameMode && config.gameMode !== 'standard' ? [
+              { value: 'red', label: 'Czerwoni' },
+              { value: 'blue', label: 'Niebiescy' },
+              { value: 'green', label: 'Zieloni' },
+            ] : [
               { value: 'red', label: 'Czerwoni (9 haseł)' },
               { value: 'blue', label: 'Niebiescy (9 haseł)' },
             ]}
-            onChange={e => onChange({ ...config, startingTeam: e.target.value as 'red' | 'blue' })}
+            onChange={e => onChange({ ...config, startingTeam: e.target.value as 'red' | 'blue' | 'green' })}
           />
 
           <Input

@@ -328,7 +328,11 @@ export async function exportPartyPackage(state: PartyState, filename?: string): 
  * - Returns clean PartyState
  */
 export async function importPartyPackage(file: File): Promise<PartyState> {
-  const isZip = file.name.endsWith('.party') || file.name.endsWith('.zip') || file.type.includes('zip');
+  const isZip =
+    file.name.toLowerCase().endsWith('.party') ||
+    file.name.toLowerCase().endsWith('.zip') ||
+    file.type.includes('zip') ||
+    file.type.includes('octet-stream');
 
   if (!isZip) {
     // Treat as JSON file
@@ -336,14 +340,30 @@ export async function importPartyPackage(file: File): Promise<PartyState> {
     return importPartyStateFromJson(text);
   }
 
-  const zip = await JSZip.loadAsync(file);
+  let zip: JSZip;
+  try {
+    zip = await JSZip.loadAsync(file);
+  } catch (zipErr) {
+    // If loading as ZIP failed, attempt fallback to direct JSON parsing
+    try {
+      const text = await file.text();
+      return importPartyStateFromJson(text);
+    } catch {
+      throw zipErr;
+    }
+  }
+
   const partyJsonFile = zip.file('party.json');
 
   if (!partyJsonFile) {
     throw new Error('Paczka nie zawiera wymaganego pliku konfiguracyjnego party.json');
   }
 
-  const jsonContent = await partyJsonFile.async('string');
+  let jsonContent = await partyJsonFile.async('string');
+  // Strip BOM if present
+  if (jsonContent.charCodeAt(0) === 0xfeff) {
+    jsonContent = jsonContent.slice(1);
+  }
   const parsedState = JSON.parse(jsonContent) as PartyState;
 
   if (!parsedState || !parsedState.profiles || !Array.isArray(parsedState.profiles)) {
@@ -354,15 +374,19 @@ export async function importPartyPackage(file: File): Promise<PartyState> {
   const zipPathToMediaKey = new Map<string, string>();
 
   // Extract all files in media/ folder and save them into IndexedDB
-  const mediaFiles = zip.file(/^media\//);
+  const mediaFiles = zip.file(/^media[\\/]/i);
   for (const zipEntry of mediaFiles) {
     if (zipEntry.dir) continue;
     const blob = await zipEntry.async('blob');
     const mediaKey = createMediaKey('imported');
     await saveMediaBlob(mediaKey, blob);
+
+    const normalizedName = zipEntry.name.replace(/\\/g, '/');
     zipPathToMediaKey.set(zipEntry.name, mediaKey);
+    zipPathToMediaKey.set(normalizedName, mediaKey);
+
     // Also map without leading path or with alternative slashes
-    const baseName = zipEntry.name.replace(/^media\//, '');
+    const baseName = normalizedName.replace(/^media\//i, '');
     zipPathToMediaKey.set(baseName, mediaKey);
   }
 
@@ -404,7 +428,12 @@ export async function importPartyPackage(file: File): Promise<PartyState> {
 }
 
 export function importPartyStateFromJson(jsonStr: string): PartyState {
-  const parsed = JSON.parse(jsonStr) as PartyState;
+  let cleanStr = jsonStr.trim();
+  // Strip UTF-8 BOM if present
+  if (cleanStr.charCodeAt(0) === 0xfeff) {
+    cleanStr = cleanStr.slice(1);
+  }
+  const parsed = JSON.parse(cleanStr) as PartyState;
   if (!parsed || !parsed.profiles || !Array.isArray(parsed.profiles)) {
     throw new Error('Nieprawidłowy format pliku kopii zapasowej imprezy.');
   }

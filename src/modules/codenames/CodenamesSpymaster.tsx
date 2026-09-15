@@ -9,11 +9,18 @@ export const CodenamesSpymaster: React.FC<{
 
   const totalRed = cards.filter(c => c.role === 'red').length;
   const totalBlue = cards.filter(c => c.role === 'blue').length;
+  const totalGreen = cards.filter(c => c.role === 'green').length;
+  const is3Team = config.gameMode === '3-team-elegant' || config.gameMode === '3-team-epic';
+  const isEpic = config.gameMode === '3-team-epic';
+
+  const winnerName = winner === 'red' ? 'CZERWONYCH' : (winner === 'blue' ? 'NIEBIESKICH' : 'ZIELONYCH');
+  const turnName = currentTurn === 'red' ? 'CZERWONI' : (currentTurn === 'blue' ? 'NIEBIESCY' : 'ZIELONI');
+  const turnColor = currentTurn === 'red' ? 'text-rose-400' : (currentTurn === 'blue' ? 'text-blue-400' : 'text-emerald-400');
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 md:p-6 space-y-6 select-none">
       {/* Header Banner */}
-      <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-purple-500/40 shadow-xl">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900 border border-purple-500/40 shadow-xl">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-purple-500/20 text-purple-400">
             <Shield className="w-6 h-6" />
@@ -29,24 +36,29 @@ export const CodenamesSpymaster: React.FC<{
         </div>
 
         {/* Turn & Score badge */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap justify-center">
           <div className="px-3 py-1.5 rounded-lg bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs font-bold">
-            🔴 Czerwoni: {redScore}/{totalRed}
+            🔴 {redScore}/{totalRed}
           </div>
           <div className="px-3 py-1.5 rounded-lg bg-blue-950/80 border border-blue-500/50 text-blue-300 text-xs font-bold">
-            🔵 Niebiescy: {blueScore}/{totalBlue}
+            🔵 {blueScore}/{totalBlue}
           </div>
+          {is3Team && (
+            <div className="px-3 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-bold">
+              🟢 {config.greenScore || 0}/{totalGreen}
+            </div>
+          )}
         </div>
       </div>
 
       {winner && (
         <div className="p-4 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-300 font-bold text-center">
-          Koniec gry! Zwycięstwo drużyny {winner === 'red' ? 'CZERWONYCH' : 'NIEBIESKICH'}!
+          Koniec gry! Zwycięstwo drużyny {winnerName}!
         </div>
       )}
 
-      {/* Spymaster 5x5 Color-Coded Grid */}
-      <div className="grid grid-cols-5 gap-2.5 md:gap-3">
+      {/* Spymaster Color-Coded Grid */}
+      <div className={`grid ${isEpic ? 'grid-cols-6' : 'grid-cols-5'} gap-2.5 md:gap-3`}>
         {cards.map(card => {
           let roleClasses = 'bg-stone-800 text-stone-300 border-stone-600';
           let roleBadge = 'Neutralny';
@@ -57,6 +69,9 @@ export const CodenamesSpymaster: React.FC<{
           } else if (card.role === 'blue') {
             roleClasses = 'bg-blue-600 text-white border-blue-400 font-black shadow-lg shadow-blue-600/30';
             roleBadge = 'Niebiescy';
+          } else if (card.role === 'green') {
+            roleClasses = 'bg-emerald-600 text-white border-emerald-400 font-black shadow-lg shadow-emerald-600/30';
+            roleBadge = 'Zieloni';
           } else if (card.role === 'assassin') {
             roleClasses = 'bg-black text-rose-400 border-rose-600 ring-2 ring-rose-600 font-black';
             roleBadge = 'Zabójca';
@@ -92,7 +107,7 @@ export const CodenamesSpymaster: React.FC<{
       </div>
 
       <div className="text-center text-xs text-slate-500">
-        Aktualna tura: <strong className={currentTurn === 'red' ? 'text-rose-400' : 'text-blue-400'}>{currentTurn === 'red' ? 'CZERWONI' : 'NIEBIESCY'}</strong>. Nie pokazuj tego ekranu zgadującym graczom!
+        Aktualna tura: <strong className={turnColor}>{turnName}</strong>. Nie pokazuj tego ekranu zgadującym graczom!
       </div>
     </div>
   );

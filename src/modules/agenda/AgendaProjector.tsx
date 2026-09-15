@@ -25,9 +25,9 @@ export const AgendaProjector: React.FC<{ config: AgendaConfig; isActive: boolean
         </h1>
       </div>
 
-      {/* Timeline Grid - overflow visible with padding so glows bloom naturally */}
-      <div className="w-full flex-1 min-h-0 flex items-center justify-center p-4 md:p-6 overflow-visible">
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 items-stretch overflow-visible">
+      {/* Timeline Grid - scrollable container with padding so cards bloom naturally */}
+      <div className="w-full flex-1 min-h-0 overflow-y-auto px-4 py-2 md:px-6">
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 items-stretch pb-4">
           {activeProfile.items.map((item, index) => {
             const isCurrent = item.id === activeItem?.id;
 

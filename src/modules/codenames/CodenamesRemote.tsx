@@ -62,7 +62,7 @@ export const CodenamesRemote: React.FC<{
           onClick={() => codenamesAction(activeItem.id, 'next_turn')}
           className="w-full"
         >
-          Zmień turę ({config.currentTurn === 'red' ? 'Niebiescy' : 'Czerwoni'})
+          Zmień turę
         </Button>
 
         {/* Timer toggle */}
