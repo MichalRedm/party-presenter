@@ -12,7 +12,6 @@ export const textSlideModule: ModuleDefinition<TextSlideConfig> = {
     title: 'Witajcie na Imprezie!',
     subtitle: 'Rozgośćcie się i bawcie świetnie!',
     body: 'Życzymy udanej zabawy i niezapomnianej nocy!',
-    tag: 'IMPREZA 🎉',
     bgOpacity: 0.4,
     bgBlur: 0,
     textAlign: 'center',

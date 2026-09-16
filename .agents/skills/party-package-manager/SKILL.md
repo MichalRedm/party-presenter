@@ -127,7 +127,7 @@ Displays the full party timeline, highlighting current & upcoming activities.
 ```
 
 ### 3.2. `text-slide` (Slajd Tekstowy / Ogłoszenia / Toasty)
-Fullscreen announcement or toast slide with high-contrast typography, optional badge, and ambient background.
+Fullscreen announcement or toast slide with high-contrast typography and ambient background.
 ```json
 {
   "type": "text-slide",
@@ -135,7 +135,6 @@ Fullscreen announcement or toast slide with high-contrast typography, optional b
     "title": "Witajcie na 30. Urodzinach!",
     "subtitle": "Cieszymy się, że jesteście z nami!",
     "body": "Rozgośćcie się, napełnijcie kieliszki i przygotujcie się na dobrą zabawę.\nO 20:00 startujemy z grami!",
-    "tag": "START IMPREZY 🥂",
     "backgroundImage": "media/bg_welcome.jpg",
     "bgOpacity": 0.4,
     "bgBlur": 0,

@@ -1,12 +1,10 @@
 import React from 'react';
-import { Badge } from '../../components/ui/Badge';
 import { useResolvedMediaUrl } from '../../hooks/useResolvedMediaUrl';
 
 export interface TextSlideConfig {
   title: string;
   subtitle?: string;
   body?: string;
-  tag?: string;
   backgroundImage?: string;
   bgOpacity?: number; // 0.0 to 1.0
   bgBlur?: number; // px blur
@@ -22,7 +20,6 @@ export const TextSlideProjector: React.FC<{
     title,
     subtitle,
     body,
-    tag,
     backgroundImage,
     bgOpacity = 0.4,
     bgBlur = 0,
@@ -57,12 +54,6 @@ export const TextSlideProjector: React.FC<{
 
       {/* Main Content Card */}
       <div className={`relative z-10 max-w-5xl flex flex-col ${alignClasses[textAlign]} space-y-6 md:space-y-8 animate-in zoom-in-95 duration-500`}>
-        {tag && (
-          <Badge variant="purple" size="md" className="px-5 py-2 text-sm tracking-widest font-black shadow-lg shadow-purple-500/30">
-            {tag}
-          </Badge>
-        )}
-
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tight drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)] leading-tight">
           {title}
         </h1>

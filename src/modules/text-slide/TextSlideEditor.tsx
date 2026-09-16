@@ -60,13 +60,6 @@ export const TextSlideEditor: React.FC<{
         onChange={e => onChange({ ...config, body: e.target.value })}
       />
 
-      <Input
-        label="Etykieta / Tag (np. START, TOAST, OGŁOSZENIE)"
-        value={config.tag || ''}
-        placeholder="np. TOAST 🥂"
-        onChange={e => onChange({ ...config, tag: e.target.value })}
-      />
-
       <Select
         label="Wyrównanie tekstu"
         value={config.textAlign || 'center'}

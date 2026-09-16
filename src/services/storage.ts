@@ -83,7 +83,6 @@ export function createDefaultPartyProfile(): PartyProfile {
         title: 'Witajcie na Imprezie!',
         subtitle: 'Rozgośćcie się, napijcie czegoś dobrego i bawcie się świetnie!',
         body: 'Dziś świętujemy, wspominamy i gramy do białego rana.\nNiech ta noc będzie niezapomniana!',
-        tag: 'START IMPREZY 🎉',
         backgroundImage: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=1920&auto=format&fit=crop',
         bgOpacity: 0.35,
         textAlign: 'center',
