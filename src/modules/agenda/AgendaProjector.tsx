@@ -218,10 +218,7 @@ export const AgendaProjector: React.FC<{ config: AgendaConfig; isActive: boolean
       itemsCount <= 4 ? 'text-lg md:text-xl' : 'text-base md:text-lg';
 
     return (
-      <div className="relative flex flex-col justify-center space-y-3 md:space-y-4 w-full">
-        {/* Continuous background vertical line for the column */}
-        <div className="absolute left-[88px] md:left-[108px] top-6 bottom-6 w-0.5 bg-gradient-to-b from-purple-500/10 via-purple-400/40 to-purple-500/10" />
-
+      <div className="relative flex flex-col justify-center gap-2.5 md:gap-3.5 w-full">
         {items.map((item, idx) => {
           const actualIndex = startIndex + idx;
           const hasTarget = Boolean(
@@ -238,7 +235,7 @@ export const AgendaProjector: React.FC<{ config: AgendaConfig; isActive: boolean
               }`}
             >
               {/* Time pill column */}
-              <div className="w-[76px] md:w-[94px] shrink-0 text-right pr-2">
+              <div className="w-[72px] md:w-[88px] shrink-0 text-right pr-2">
                 {showTimes && item.time ? (
                   <span
                     className={`font-black tracking-tight ${timeSize}`}
@@ -255,10 +252,25 @@ export const AgendaProjector: React.FC<{ config: AgendaConfig; isActive: boolean
                 )}
               </div>
 
-              {/* Timeline center node */}
-              <div className="relative z-10 mx-2 md:mx-3 shrink-0">
+              {/* Timeline Track (Line segment + Circle Node) - perfectly centered */}
+              <div className="relative self-stretch flex items-center justify-center w-10 md:w-12 shrink-0">
+                {/* Vertical connecting line passing through the exact center of circles */}
+                {items.length > 1 && (
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 w-0.5 pointer-events-none"
+                    style={{
+                      backgroundColor: activeTheme?.colors?.accentPrimary
+                        ? `${activeTheme.colors.accentPrimary}60`
+                        : 'rgba(168, 85, 247, 0.4)',
+                      top: idx === 0 ? '50%' : '-0.75rem',
+                      bottom: idx === items.length - 1 ? '50%' : '-0.75rem',
+                    }}
+                  />
+                )}
+
+                {/* Circle node - perfectly centered over the line */}
                 <div
-                  className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center border-2 transition-all duration-300 shadow-lg group-hover:scale-110"
+                  className="relative z-10 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center border-2 transition-all duration-300 shadow-lg group-hover:scale-110"
                   style={{
                     backgroundColor: 'rgba(15, 23, 42, 0.95)',
                     borderColor: activeTheme?.colors?.accentPrimary || '#a855f7',
@@ -273,7 +285,7 @@ export const AgendaProjector: React.FC<{ config: AgendaConfig; isActive: boolean
 
               {/* Title & optional notes card */}
               <div
-                className={`flex-1 min-w-0 ${paddingY} px-4 md:px-5 rounded-2xl border transition-all duration-300 backdrop-blur-md ${
+                className={`flex-1 min-w-0 ${paddingY} px-4 md:px-5 rounded-2xl border transition-all duration-300 backdrop-blur-md ml-1 md:ml-2 ${
                   hasTarget
                     ? 'bg-slate-900/60 hover:bg-slate-900/90 border-white/10 hover:border-purple-400/40'
                     : 'bg-slate-900/40 border-white/5'
