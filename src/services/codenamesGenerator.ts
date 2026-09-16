@@ -41,8 +41,10 @@ export function generateCodenamesBoard(
   customWords: string[] = [],
   startingTeamOverride?: 'red' | 'blue' | 'green',
   gameMode: CodenamesConfig['gameMode'] = 'standard',
-  assassinRule: CodenamesConfig['assassinRule'] = 'standard'
+  assassinRuleOverride?: CodenamesConfig['assassinRule']
 ): CodenamesConfig {
+  const is3Team = gameMode === '3-team-elegant' || gameMode === '3-team-epic';
+  const assassinRule: CodenamesConfig['assassinRule'] = assassinRuleOverride || (is3Team ? 'sudden-death' : 'standard');
   const combinedBank = Array.from(new Set([...customWords.map(w => w.toUpperCase().trim()), ...DEFAULT_POLISH_WORD_BANK])).filter(
     w => w.length > 0
   );

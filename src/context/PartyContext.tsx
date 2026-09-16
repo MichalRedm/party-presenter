@@ -530,7 +530,8 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
           assassinTriggered = true;
           soundEngine.playBuzzer();
 
-          if (currentConfig.assassinRule === 'sudden-death' && availableTeams.length > 2) {
+          // In 3-team variants (or if sudden-death rule is explicitly chosen), the team that hit the assassin is eliminated
+          if (availableTeams.length > 2 || currentConfig.assassinRule === 'sudden-death') {
             eliminatedTeams.push(currentConfig.currentTurn);
             const remainingTeams = availableTeams.filter(t => !eliminatedTeams.includes(t));
             if (remainingTeams.length === 1) {
@@ -538,16 +539,14 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
               soundEngine.playVictory();
               firePartyConfetti();
             } else {
+              // Game continues for remaining teams
               nextTurn = advanceTurn(currentConfig.currentTurn);
             }
           } else {
-             // Standard: game over, other team wins (if 2 teams) or no winner
-             if (availableTeams.length === 2) {
-                winner = currentConfig.currentTurn === 'red' ? 'blue' : 'red';
-             } else {
-                // If standard rule on 3 teams: the other two win? Or just no winner.
-                winner = null;
-             }
+            // Standard 2-team: game over, opposing team wins
+            winner = currentConfig.currentTurn === 'red' ? 'blue' : 'red';
+            soundEngine.playVictory();
+            firePartyConfetti();
           }
         } else if (redScore >= totalRed) {
           winner = 'red';

@@ -129,24 +129,22 @@ export const CodenamesProjector: React.FC<{
                 </button>
               )}
             </div>
-          ) : assassinTriggered && isPopupDismissed ? (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-6 py-2 rounded-xl bg-rose-500/20 border border-rose-400/50 text-rose-300 font-bold text-lg animate-bounce">
-                <ShieldAlert className="w-5 h-5 text-rose-400" />
-                <span>ZABÓJCA ODKRYTY!</span>
+          ) : !winner && eliminated.length > 0 ? (
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/10 text-white font-black text-base md:text-lg tracking-wider uppercase">
+                <span>Tura:</span>
+                <span className={`${currentTurnColor} font-extrabold`}>
+                  {currentTurnName}
+                </span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/40 ml-1 font-bold">
+                  (Odpada: {eliminated.map(t => t === 'red' ? 'Czerwoni' : (t === 'blue' ? 'Niebiescy' : 'Zieloni')).join(', ')})
+                </span>
               </div>
-              {activeItem && (
-                <button
-                  onClick={() => {
-                    codenamesAction(activeItem.id, 'new_game');
-                    setIsPopupDismissed(false);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-sm shadow-lg shadow-rose-600/30 transition-all cursor-pointer hover:scale-105"
-                  title="Rozpocznij nową grę"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>Nowa gra</span>
-                </button>
+
+              {currentClue && (
+                <div className="text-sm font-semibold text-purple-200">
+                  Podpowiedź: <span className="text-amber-300 uppercase font-black">{currentClue.word}</span> ({currentClue.count})
+                </div>
               )}
             </div>
           ) : (
@@ -304,17 +302,26 @@ export const CodenamesProjector: React.FC<{
                   <h2 className="text-4xl md:text-6xl font-black text-rose-400 tracking-tight drop-shadow-md">
                     ZABÓJCA ODKRYTY!
                   </h2>
-                  <p className="text-lg md:text-2xl text-slate-200 font-bold">
+                  <div className="text-lg md:text-2xl text-slate-200 font-bold space-y-1">
                     {winner ? (
-                      <>
+                      <p>
                         Drużyna <span className="text-amber-300 font-black uppercase">{winnerName}</span> wygrywa grę!
-                      </>
+                      </p>
                     ) : (
                       <>
-                        Drużyna została wyeliminowana!
+                        <p className="text-rose-300">
+                          {eliminated.length > 0 ? (
+                            <>Drużyna <span className="text-white uppercase font-black">{eliminated[eliminated.length - 1] === 'red' ? 'CZERWONYCH' : (eliminated[eliminated.length - 1] === 'blue' ? 'NIEBIESKICH' : 'ZIELONYCH')}</span> została wyeliminowana!</>
+                          ) : (
+                            <>Drużyna została wyeliminowana!</>
+                          )}
+                        </p>
+                        <p className="text-sm md:text-base text-slate-400 font-normal">
+                          Pozostałe drużyny kontynuują rozgrywkę. Teraz tura drużyny: <strong className={currentTurnColor}>{currentTurnName}</strong>.
+                        </p>
                       </>
                     )}
-                  </p>
+                  </div>
                 </div>
               </>
             ) : (
@@ -335,13 +342,17 @@ export const CodenamesProjector: React.FC<{
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <button
                 onClick={() => setIsPopupDismissed(true)}
-                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm md:text-base transition-all flex items-center gap-2 cursor-pointer"
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm md:text-base transition-all flex items-center gap-2 cursor-pointer ${
+                  !winner
+                    ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/30'
+                    : 'bg-white/10 hover:bg-white/20 border border-white/20 text-white'
+                }`}
               >
                 <Eye className="w-4 h-4" />
-                Zobacz planszę
+                {!winner ? 'Kontynuuj grę' : 'Zobacz planszę'}
               </button>
 
-              {activeItem && (
+              {winner && activeItem && (
                 <button
                   onClick={() => {
                     codenamesAction(activeItem.id, 'new_game');
