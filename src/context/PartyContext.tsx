@@ -530,8 +530,8 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
           assassinTriggered = true;
           soundEngine.playBuzzer();
 
-          // In 3-team variants (or if sudden-death rule is explicitly chosen), the team that hit the assassin is eliminated
-          if (availableTeams.length > 2 || currentConfig.assassinRule === 'sudden-death') {
+          // In games with more than 2 teams: team that hit the assassin is eliminated and remaining teams continue
+          if (availableTeams.length > 2) {
             eliminatedTeams.push(currentConfig.currentTurn);
             const remainingTeams = availableTeams.filter(t => !eliminatedTeams.includes(t));
             if (remainingTeams.length === 1) {
@@ -543,7 +543,7 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
               nextTurn = advanceTurn(currentConfig.currentTurn);
             }
           } else {
-            // Standard 2-team: game over, opposing team wins
+            // Standard 2 teams: immediate game over, opposing team wins
             winner = currentConfig.currentTurn === 'red' ? 'blue' : 'red';
             soundEngine.playVictory();
             firePartyConfetti();
@@ -613,7 +613,12 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
           isTimerRunning: false,
         } as unknown as Record<string, unknown>);
       } else if (action === 'new_game') {
-        const freshBoard = generateCodenamesBoard(currentConfig.customWordBank || [], undefined, currentConfig.gameMode, currentConfig.assassinRule);
+        const freshBoard = generateCodenamesBoard(
+          currentConfig.customWordBank || [],
+          undefined,
+          currentConfig.gameMode,
+          currentConfig.hasAssassin !== false
+        );
         soundEngine.playFanfare();
         updateItemConfig(itemId, freshBoard as unknown as Record<string, unknown>);
       } else if (action === 'update_clue' && payload?.clueWord) {

@@ -17,7 +17,7 @@ export interface CodenamesClue {
 
 export interface CodenamesConfig {
   gameMode?: CodenamesGameMode;
-  assassinRule?: CodenamesAssassinRule;
+  hasAssassin?: boolean;
   cards: CodenamesCard[];
   startingTeam: 'red' | 'blue' | 'green';
   currentTurn: 'red' | 'blue' | 'green';

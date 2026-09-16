@@ -41,10 +41,8 @@ export function generateCodenamesBoard(
   customWords: string[] = [],
   startingTeamOverride?: 'red' | 'blue' | 'green',
   gameMode: CodenamesConfig['gameMode'] = 'standard',
-  assassinRuleOverride?: CodenamesConfig['assassinRule']
+  hasAssassin: boolean = true
 ): CodenamesConfig {
-  const is3Team = gameMode === '3-team-elegant' || gameMode === '3-team-epic';
-  const assassinRule: CodenamesConfig['assassinRule'] = assassinRuleOverride || (is3Team ? 'sudden-death' : 'standard');
   const combinedBank = Array.from(new Set([...customWords.map(w => w.toUpperCase().trim()), ...DEFAULT_POLISH_WORD_BANK])).filter(
     w => w.length > 0
   );
@@ -65,19 +63,20 @@ export function generateCodenamesBoard(
   let roles: CodenamesRole[] = [];
 
   if (gameMode === '3-team-epic') {
-    // 36 cards: 10, 9, 8, 8 neutral, 1 assassin
+    // 36 cards: 10, 9, 8, neutral/assassin
     const t1 = startingTeam;
     const t2 = t1 === 'red' ? 'blue' : (t1 === 'blue' ? 'green' : 'red');
     const t3 = availableTeams.find(t => t !== t1 && t !== t2)!;
+    const neutralCount = hasAssassin ? 8 : 9;
     roles = [
       ...Array(10).fill(t1),
       ...Array(9).fill(t2),
       ...Array(8).fill(t3),
-      ...Array(8).fill('neutral'),
-      'assassin',
+      ...Array(neutralCount).fill('neutral'),
+      ...(hasAssassin ? ['assassin' as CodenamesRole] : []),
     ];
   } else if (gameMode === '3-team-elegant') {
-    // 25 cards: 9, 8, 7, 1 assassin
+    // 25 cards: 9, 8, 7. If assassin enabled: 1 assassin, 0 neutral. If disabled: 0 assassin, 1 neutral.
     const t1 = startingTeam;
     const t2 = t1 === 'red' ? 'blue' : (t1 === 'blue' ? 'green' : 'red');
     const t3 = availableTeams.find(t => t !== t1 && t !== t2)!;
@@ -85,16 +84,17 @@ export function generateCodenamesBoard(
       ...Array(9).fill(t1),
       ...Array(8).fill(t2),
       ...Array(7).fill(t3),
-      'assassin',
+      ...(hasAssassin ? ['assassin' as CodenamesRole] : ['neutral' as CodenamesRole]),
     ];
   } else {
-    // standard: 9, 8, 7 neutral, 1 assassin
+    // standard: 9, 8. If assassin enabled: 7 neutral, 1 assassin. If disabled: 8 neutral.
     const secondTeam = startingTeam === 'red' ? 'blue' : 'red';
+    const neutralCount = hasAssassin ? 7 : 8;
     roles = [
       ...Array(9).fill(startingTeam),
       ...Array(8).fill(secondTeam),
-      ...Array(7).fill('neutral'),
-      'assassin',
+      ...Array(neutralCount).fill('neutral'),
+      ...(hasAssassin ? ['assassin' as CodenamesRole] : []),
     ];
   }
 
@@ -109,7 +109,7 @@ export function generateCodenamesBoard(
 
   return {
     gameMode,
-    assassinRule,
+    hasAssassin,
     cards,
     startingTeam,
     currentTurn: startingTeam,

@@ -20,7 +20,12 @@ export const CodenamesEditor: React.FC<{
       .map(w => w.trim().toUpperCase())
       .filter(w => w.length > 0);
 
-    const freshBoard = generateCodenamesBoard(parsed, config.startingTeam, config.gameMode, config.assassinRule);
+    const freshBoard = generateCodenamesBoard(
+      parsed,
+      config.startingTeam,
+      config.gameMode,
+      config.hasAssassin !== false
+    );
     onChange({
       ...freshBoard,
       customWordBank: parsed,
@@ -46,17 +51,47 @@ export const CodenamesEditor: React.FC<{
               { value: '3-team-elegant', label: '3 drużyny - elegancki (25 kart, 0 neutralnych)' },
               { value: '3-team-epic', label: '3 drużyny - epicki (36 kart)' },
             ]}
-            onChange={e => onChange({ ...config, gameMode: e.target.value as 'standard' | '3-team-elegant' | '3-team-epic' })}
+            onChange={e => {
+              const newMode = e.target.value as 'standard' | '3-team-elegant' | '3-team-epic';
+              const parsed = config.customWordBank || [];
+              const freshBoard = generateCodenamesBoard(
+                parsed,
+                undefined,
+                newMode,
+                config.hasAssassin !== false
+              );
+              onChange({
+                ...freshBoard,
+                customWordBank: parsed,
+                initialTimerSeconds: config.initialTimerSeconds || 90,
+                timerSeconds: config.initialTimerSeconds || 90,
+              });
+            }}
           />
 
           <Select
-            label="Zasada Zabójcy"
-            value={config.assassinRule || 'standard'}
+            label="Karta Zabójcy"
+            value={config.hasAssassin !== false ? 'yes' : 'no'}
             options={[
-              { value: 'standard', label: 'Natychmiastowy koniec gry' },
-              { value: 'sudden-death', label: 'Miękki Zabójca (eliminacja drużyny)' },
+              { value: 'yes', label: 'Włączona (1 czarna karta)' },
+              { value: 'no', label: 'Wyłączona (brak zabójcy na planszy)' },
             ]}
-            onChange={e => onChange({ ...config, assassinRule: e.target.value as 'standard' | 'sudden-death' })}
+            onChange={e => {
+              const hasAssassin = e.target.value === 'yes';
+              const parsed = (config.customWordBank || []);
+              const freshBoard = generateCodenamesBoard(
+                parsed,
+                config.startingTeam,
+                config.gameMode,
+                hasAssassin
+              );
+              onChange({
+                ...freshBoard,
+                customWordBank: parsed,
+                initialTimerSeconds: config.initialTimerSeconds || 90,
+                timerSeconds: config.initialTimerSeconds || 90,
+              });
+            }}
           />
 
           <Select
