@@ -1,5 +1,6 @@
 import React from 'react';
 import { useResolvedMediaUrl } from '../../hooks/useResolvedMediaUrl';
+import { useParty } from '../../context/PartyContext';
 
 export interface TextSlideConfig {
   title: string;
@@ -16,6 +17,7 @@ export const TextSlideProjector: React.FC<{
   config: TextSlideConfig;
   isActive: boolean;
 }> = ({ config }) => {
+  const { activeTheme } = useParty();
   const {
     title,
     subtitle,
@@ -59,7 +61,10 @@ export const TextSlideProjector: React.FC<{
         </h1>
 
         {subtitle && (
-          <p className="text-2xl md:text-4xl text-purple-200 font-semibold tracking-wide max-w-4xl drop-shadow-md">
+          <p
+            className="text-2xl md:text-4xl text-purple-200 font-semibold tracking-wide max-w-4xl drop-shadow-md transition-colors"
+            style={activeTheme?.colors?.textSecondary ? { color: activeTheme.colors.textSecondary } : undefined}
+          >
             {subtitle}
           </p>
         )}

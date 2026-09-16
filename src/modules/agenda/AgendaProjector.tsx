@@ -13,6 +13,7 @@ export const AgendaProjector: React.FC<{ config: AgendaConfig; isActive: boolean
   const layout = config.layout || 'timeline';
 
   // Render items from custom config.items, or fallback to profile items for backwards compatibility
+  // Note: We deliberately set notes: undefined in fallback to protect private host backstage notes from leaking on stage!
   const displayItems: AgendaItem[] =
     config.items && config.items.length > 0
       ? config.items
@@ -21,7 +22,7 @@ export const AgendaProjector: React.FC<{ config: AgendaConfig; isActive: boolean
           title: item.title,
           time: item.time,
           durationMinutes: item.durationMinutes,
-          notes: item.notes,
+          notes: undefined,
           linkedItemId: item.id,
         }));
 

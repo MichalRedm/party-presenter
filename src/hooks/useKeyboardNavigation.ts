@@ -14,6 +14,7 @@ export function useKeyboardNavigation(enabled: boolean = true) {
   } = useParty();
 
   const [showHelp, setShowHelp] = useState(false);
+  const [isBlackout, setIsBlackout] = useState(false);
 
   useEffect(() => {
     if (!enabled) return;
@@ -22,6 +23,15 @@ export function useKeyboardNavigation(enabled: boolean = true) {
       // Ignore keystrokes in input or textarea
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+        return;
+      }
+
+      // Any key press exits blackout mode
+      if (isBlackout) {
+        setIsBlackout(false);
+        if (e.code === 'KeyB' || e.code === 'Period') {
+          e.preventDefault();
+        }
         return;
       }
 
@@ -37,6 +47,12 @@ export function useKeyboardNavigation(enabled: boolean = true) {
         case 'PageUp':
           e.preventDefault();
           prevItem();
+          break;
+
+        case 'KeyB':
+        case 'Period':
+          e.preventDefault();
+          setIsBlackout(prev => !prev);
           break;
 
         case 'KeyF':
@@ -75,10 +91,12 @@ export function useKeyboardNavigation(enabled: boolean = true) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [enabled, nextItem, prevItem, triggerConfetti, setSoundConfig, state.soundEnabled, state.soundVolume, activeProfile.themeId, setTheme]);
+  }, [enabled, isBlackout, nextItem, prevItem, triggerConfetti, setSoundConfig, state.soundEnabled, state.soundVolume, activeProfile.themeId, setTheme]);
 
   return {
     showHelp,
     setShowHelp,
+    isBlackout,
+    setIsBlackout,
   };
 }

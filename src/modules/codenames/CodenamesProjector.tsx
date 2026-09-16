@@ -167,7 +167,11 @@ export const CodenamesProjector: React.FC<{
 
         {/* Turn Timer & Blue & Green Team Score */}
         <div className="flex items-center gap-2 md:gap-4">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-slate-200">
+          <div
+            onClick={() => activeItem && codenamesAction(activeItem.id, 'toggle_timer')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-950/60 hover:bg-slate-900 border border-white/10 hover:border-purple-400/40 text-slate-200 cursor-pointer transition-all active:scale-95"
+            title="Kliknij, aby uruchomić / zatrzymać stoper"
+          >
             <Timer className={`w-4 h-4 ${timerSeconds <= 10 && isTimerRunning ? 'text-rose-400 animate-spin' : 'text-slate-400'}`} />
             <span className={`font-mono text-xl font-bold ${timerSeconds <= 10 && isTimerRunning ? 'text-rose-400 animate-pulse' : 'text-slate-100'}`}>
               {pad(timerMins)}:{pad(timerSecs)}

@@ -33,7 +33,7 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
     setTheme,
   } = useParty();
 
-  const { showHelp, setShowHelp } = useKeyboardNavigation(true);
+  const { showHelp, setShowHelp, isBlackout, setIsBlackout } = useKeyboardNavigation(true);
   const [isFullscreen, setIsFullscreen] = useState(Boolean(document.fullscreenElement));
   const [controlsVisible, setControlsVisible] = useState(false);
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -269,6 +269,13 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
           </div>
 
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+            <span className="text-slate-300 font-medium">Zaciemnienie ekranu (Blackout) 🕶️</span>
+            <kbd className="px-2 py-1 rounded bg-slate-800 border border-slate-700 font-mono text-xs font-bold text-purple-300">
+              B / Kropka (.)
+            </kbd>
+          </div>
+
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
             <span className="text-slate-300 font-medium">Otwórz to okno pomocy</span>
             <kbd className="px-2 py-1 rounded bg-slate-800 border border-slate-700 font-mono text-xs font-bold text-purple-300">
               H
@@ -276,6 +283,15 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
           </div>
         </div>
       </Modal>
+
+      {/* Blackout overlay for presenter (Key B / Period) */}
+      {isBlackout && (
+        <div
+          onClick={() => setIsBlackout(false)}
+          className="fixed inset-0 z-50 bg-black cursor-pointer animate-in fade-in duration-300"
+          title="Kliknij lub naciśnij dowolny klawisz, aby wyłączyć zaciemnienie"
+        />
+      )}
     </div>
   );
 };
