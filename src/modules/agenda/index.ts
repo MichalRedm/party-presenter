@@ -13,9 +13,11 @@ export const agendaModule: ModuleDefinition<AgendaConfig> = {
   icon: CalendarDays,
   defaultConfig: {
     title: 'Harmonogram Imprezy',
+    items: [],
     showEstimatedTimes: true,
-    showDescription: true,
-    highlightCurrent: true,
+    showDescription: false,
+    layout: 'timeline',
+    columns: 'auto',
   },
   ProjectorComponent: AgendaProjector,
   AdminEditorComponent: AgendaEditor,

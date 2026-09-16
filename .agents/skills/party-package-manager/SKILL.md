@@ -113,15 +113,26 @@ my_birthday_event.party (standard ZIP)
 ## 3. Module Configurations Reference
 
 ### 3.1. `agenda` (Harmonogram / Agenda Overview)
-Displays the full party timeline, highlighting current & upcoming activities.
+Displays the full party timeline with custom items or on-demand imported schedule points.
 ```json
 {
   "type": "agenda",
   "config": {
     "title": "Harmonogram Imprezy",
+    "items": [
+      {
+        "id": "ag_1",
+        "title": "Wielkie Powitanie i Toast",
+        "time": "19:15",
+        "durationMinutes": 45,
+        "notes": "Rozpoczęcie imprezy i pierwsze toasty",
+        "linkedItemId": "item_welcome_toast"
+      }
+    ],
     "showEstimatedTimes": true,
-    "showDescription": true,
-    "highlightCurrent": true
+    "showDescription": false,
+    "layout": "timeline",
+    "columns": "auto"
   }
 }
 ```

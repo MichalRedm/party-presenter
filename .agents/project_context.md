@@ -18,7 +18,7 @@ Deliver and maintain the full Party Presenter presentation application running o
 - [x] Web Audio sound engine (bells, buzzer, fanfare, ticks, celebratory cues).
 - [x] Theme system & dynamic visual presets (`midnight-velvet`, `cyberpunk-neon`, `golden-glamour`, `retro-sunset`, `emerald-luxury`, `minimal-dark`).
 - [x] Built-in module implementations:
-  - [x] `agenda` (Harmonogram with timeline, countdown, and active item spotlight)
+  - [x] `agenda` (Harmonogram z własną listą punktów, generowaniem na żądanie z programu imprezy i ręczną edycją)
   - [x] `text-slide` (Rich text announcements with background image, opacity, and blur support)
   - [x] `slideshow` (Photo memories carousel with auto-play & captions)
   - [x] `countdown` (Big screen countdown timer with audio ticks and zero celebration)
