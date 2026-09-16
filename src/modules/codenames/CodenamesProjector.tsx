@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParty } from '../../context/PartyContext';
 import { CodenamesConfig, CodenamesCard } from '../../types/codenames';
 import { soundEngine } from '../../services/soundEngine';
-import { Sparkles, Skull, Crown, Timer, ShieldAlert } from 'lucide-react';
+import { Sparkles, Skull, Crown, Timer, ShieldAlert, X, RotateCcw, Eye } from 'lucide-react';
 
 export const CodenamesProjector: React.FC<{
   config: CodenamesConfig;
@@ -20,6 +20,28 @@ export const CodenamesProjector: React.FC<{
     isTimerRunning = false,
     currentClue = null,
   } = config;
+
+  const [isPopupDismissed, setIsPopupDismissed] = useState(false);
+
+  // Auto show popup when a new game over or assassin trigger occurs
+  useEffect(() => {
+    if (assassinTriggered || winner) {
+      setIsPopupDismissed(false);
+    } else {
+      setIsPopupDismissed(false);
+    }
+  }, [assassinTriggered, winner]);
+
+  // Close popup with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isPopupDismissed && (assassinTriggered || winner)) {
+        setIsPopupDismissed(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPopupDismissed, assassinTriggered, winner]);
 
   // Turn timer countdown
   useEffect(() => {
@@ -88,10 +110,31 @@ export const CodenamesProjector: React.FC<{
         {/* Turn Status & Clue */}
         <div className="flex flex-col items-center justify-center text-center">
           {winner ? (
-            <div className="flex items-center gap-2 px-6 py-2 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-300 font-bold text-lg animate-bounce">
+            <button
+              onClick={() => setIsPopupDismissed(false)}
+              className="flex items-center gap-2 px-6 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 font-bold text-lg animate-bounce transition-all cursor-pointer group"
+              title="Kliknij, aby otworzyć podsumowanie gry"
+            >
               <Crown className="w-5 h-5 text-amber-400" />
               <span>ZWYCIĘSTWO DRUŻYNY {winnerName}!</span>
-            </div>
+              {isPopupDismissed && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-400/20 text-amber-200 border border-amber-400/30 ml-1 group-hover:scale-105 transition-transform flex items-center gap-1">
+                  <Eye className="w-3 h-3" /> Pokaż popup
+                </span>
+              )}
+            </button>
+          ) : assassinTriggered && isPopupDismissed ? (
+            <button
+              onClick={() => setIsPopupDismissed(false)}
+              className="flex items-center gap-2 px-6 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/50 text-rose-300 font-bold text-lg animate-bounce transition-all cursor-pointer group"
+              title="Kliknij, aby otworzyć informację o zabójcy"
+            >
+              <ShieldAlert className="w-5 h-5 text-rose-400" />
+              <span>ZABÓJCA ODKRYTY!</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-rose-400/20 text-rose-200 border border-rose-400/30 ml-1 group-hover:scale-105 transition-transform flex items-center gap-1">
+                <Eye className="w-3 h-3" /> Pokaż popup
+              </span>
+            </button>
           ) : (
             <div className="space-y-1">
               <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/10 text-white font-black text-base md:text-lg tracking-wider uppercase">
@@ -212,17 +255,91 @@ export const CodenamesProjector: React.FC<{
         })}
       </div>
 
-      {/* Assassin Overlay Notification */}
-      {assassinTriggered && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in zoom-in">
-          <div className="max-w-2xl p-8 rounded-3xl bg-rose-950/90 border-2 border-rose-500 shadow-2xl shadow-rose-600/50 text-center space-y-6">
-            <ShieldAlert className="w-20 h-20 text-rose-500 mx-auto animate-bounce" />
-            <h2 className="text-5xl md:text-7xl font-black text-rose-400 tracking-tight">
-              ZABÓJCA ODKRYTY!
-            </h2>
-            <p className="text-2xl text-slate-200 font-bold">
-              Drużyna <span className="text-amber-300 font-black">{winner === 'red' ? 'CZERWONYCH' : 'NIEBIESKICH'}</span> wygrywa grę!
-            </p>
+      {/* Game End / Assassin Popup Notification */}
+      {!isPopupDismissed && (assassinTriggered || winner) && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+          {/* Backdrop (clickable to dismiss and view the board) */}
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity animate-in fade-in"
+            onClick={() => setIsPopupDismissed(true)}
+          />
+
+          {/* Popup Card */}
+          <div
+            className={`relative z-50 w-full max-w-2xl p-6 md:p-8 rounded-3xl border-2 shadow-2xl animate-in zoom-in-95 duration-200 text-center space-y-6 ${
+              assassinTriggered
+                ? 'bg-gradient-to-b from-slate-950 via-rose-950 to-slate-950 border-rose-500 shadow-rose-600/40'
+                : 'bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-amber-500/80 shadow-amber-500/30'
+            }`}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsPopupDismissed(true)}
+              className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50"
+              aria-label="Zamknij popup i zobacz planszę"
+              title="Zamknij popup i zobacz planszę (Esc)"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Icon & Title */}
+            {assassinTriggered ? (
+              <>
+                <ShieldAlert className="w-16 h-16 md:w-20 md:h-20 text-rose-500 mx-auto animate-bounce" />
+                <div className="space-y-2">
+                  <h2 className="text-4xl md:text-6xl font-black text-rose-400 tracking-tight drop-shadow-md">
+                    ZABÓJCA ODKRYTY!
+                  </h2>
+                  <p className="text-lg md:text-2xl text-slate-200 font-bold">
+                    {winner ? (
+                      <>
+                        Drużyna <span className="text-amber-300 font-black uppercase">{winnerName}</span> wygrywa grę!
+                      </>
+                    ) : (
+                      <>
+                        Drużyna została wyeliminowana!
+                      </>
+                    )}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <Crown className="w-16 h-16 md:w-20 md:h-20 text-amber-400 mx-auto animate-bounce" />
+                <div className="space-y-2">
+                  <h2 className="text-4xl md:text-6xl font-black text-amber-400 tracking-tight drop-shadow-md">
+                    KONIEC GRY!
+                  </h2>
+                  <p className="text-lg md:text-2xl text-slate-200 font-bold">
+                    Zwycięstwo odnosi drużyna <span className="text-amber-300 font-black uppercase">{winnerName}</span>!
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => setIsPopupDismissed(true)}
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm md:text-base transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Eye className="w-4 h-4" />
+                Zobacz planszę
+              </button>
+
+              {activeItem && (
+                <button
+                  onClick={() => {
+                    codenamesAction(activeItem.id, 'new_game');
+                    setIsPopupDismissed(false);
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm md:text-base shadow-lg shadow-amber-500/30 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Nowa runda
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
