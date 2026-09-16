@@ -110,31 +110,45 @@ export const CodenamesProjector: React.FC<{
         {/* Turn Status & Clue */}
         <div className="flex flex-col items-center justify-center text-center">
           {winner ? (
-            <button
-              onClick={() => setIsPopupDismissed(false)}
-              className="flex items-center gap-2 px-6 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 font-bold text-lg animate-bounce transition-all cursor-pointer group"
-              title="Kliknij, aby otworzyć podsumowanie gry"
-            >
-              <Crown className="w-5 h-5 text-amber-400" />
-              <span>ZWYCIĘSTWO DRUŻYNY {winnerName}!</span>
-              {isPopupDismissed && (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-400/20 text-amber-200 border border-amber-400/30 ml-1 group-hover:scale-105 transition-transform flex items-center gap-1">
-                  <Eye className="w-3 h-3" /> Pokaż popup
-                </span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-6 py-2 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-300 font-bold text-lg animate-bounce">
+                <Crown className="w-5 h-5 text-amber-400" />
+                <span>ZWYCIĘSTWO DRUŻYNY {winnerName}!</span>
+              </div>
+              {activeItem && (
+                <button
+                  onClick={() => {
+                    codenamesAction(activeItem.id, 'new_game');
+                    setIsPopupDismissed(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/30 transition-all cursor-pointer hover:scale-105"
+                  title="Rozpocznij nową grę"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Nowa gra</span>
+                </button>
               )}
-            </button>
+            </div>
           ) : assassinTriggered && isPopupDismissed ? (
-            <button
-              onClick={() => setIsPopupDismissed(false)}
-              className="flex items-center gap-2 px-6 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/50 text-rose-300 font-bold text-lg animate-bounce transition-all cursor-pointer group"
-              title="Kliknij, aby otworzyć informację o zabójcy"
-            >
-              <ShieldAlert className="w-5 h-5 text-rose-400" />
-              <span>ZABÓJCA ODKRYTY!</span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-rose-400/20 text-rose-200 border border-rose-400/30 ml-1 group-hover:scale-105 transition-transform flex items-center gap-1">
-                <Eye className="w-3 h-3" /> Pokaż popup
-              </span>
-            </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-6 py-2 rounded-xl bg-rose-500/20 border border-rose-400/50 text-rose-300 font-bold text-lg animate-bounce">
+                <ShieldAlert className="w-5 h-5 text-rose-400" />
+                <span>ZABÓJCA ODKRYTY!</span>
+              </div>
+              {activeItem && (
+                <button
+                  onClick={() => {
+                    codenamesAction(activeItem.id, 'new_game');
+                    setIsPopupDismissed(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-sm shadow-lg shadow-rose-600/30 transition-all cursor-pointer hover:scale-105"
+                  title="Rozpocznij nową grę"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Nowa gra</span>
+                </button>
+              )}
+            </div>
           ) : (
             <div className="space-y-1">
               <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/10 text-white font-black text-base md:text-lg tracking-wider uppercase">
