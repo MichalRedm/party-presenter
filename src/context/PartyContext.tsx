@@ -755,7 +755,7 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
 
   const exportPackage = useCallback(async () => {
     const safeName = activeProfile.name.toLowerCase().replace(/\s+/g, '_');
-    await exportPartyPackage(state, `party_package_${safeName}.party`);
+    await exportPartyPackage(state, `party_package_${safeName}.zip`);
   }, [state, activeProfile]);
 
   const importPackage = useCallback(async (file: File): Promise<PartyState> => {

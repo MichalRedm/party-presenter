@@ -317,7 +317,7 @@ export async function exportPartyPackage(state: PartyState, filename?: string): 
 
   // Trigger download
   const downloadAnchor = document.createElement('a');
-  const safeFilename = filename || `party_package_${new Date().toISOString().slice(0, 10)}.party`;
+  const safeFilename = filename || `party_package_${new Date().toISOString().slice(0, 10)}.zip`;
 
   const downloadUrl = URL.createObjectURL(zipBlob);
   downloadAnchor.setAttribute('href', downloadUrl);

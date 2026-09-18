@@ -265,12 +265,12 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             )}
           </div>
 
-          {/* Export & Import Complete Party Package (.party / .zip) */}
+          {/* Export & Import Complete Party Package (.zip / .party) */}
           <div className="p-4 bg-gradient-to-br from-purple-950/40 via-slate-950 to-slate-950 rounded-xl border border-purple-800/40 space-y-3">
             <div className="flex items-center gap-2">
               <Archive className="w-4 h-4 text-purple-400" />
               <h4 className="text-xs font-bold text-purple-200 uppercase tracking-wider">
-                Kompletna Paczka Imprezy (.party / .zip) — Rekomendowana
+                Kompletna Paczka Imprezy (.zip) — Rekomendowana
               </h4>
             </div>
             <p className="text-xs text-slate-300">
@@ -285,13 +285,13 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 icon={<Archive className="w-4 h-4" />}
                 disabled={isExportingPackage}
               >
-                {isExportingPackage ? 'Pakowanie archiwum ZIP...' : 'Pobierz paczkę (.party)'}
+                {isExportingPackage ? 'Pakowanie archiwum ZIP...' : 'Pobierz paczkę (.zip)'}
               </Button>
 
               <input
                 type="file"
                 ref={fileInputRef}
-                accept=".party,.zip,.json"
+                accept=".zip,.party,.json"
                 className="hidden"
                 onChange={handleImportFile}
               />
@@ -302,7 +302,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 icon={<Upload className="w-4 h-4" />}
                 disabled={isImporting}
               >
-                {isImporting ? 'Rozpakowywanie i importowanie...' : 'Wczytaj paczkę (.party, .zip lub .json)'}
+                {isImporting ? 'Rozpakowywanie i importowanie...' : 'Wczytaj paczkę (.zip, .party lub .json)'}
               </Button>
             </div>
           </div>
