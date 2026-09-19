@@ -1,11 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CodenamesConfig } from '../../types/codenames';
-import { Shield, Skull, CheckCircle } from 'lucide-react';
+import { Shield, Skull, CheckCircle, Timer } from 'lucide-react';
 
 export const CodenamesSpymaster: React.FC<{
   config: CodenamesConfig;
 }> = ({ config }) => {
   const { cards = [], currentTurn = 'red', redScore = 0, blueScore = 0, winner = null } = config;
+
+  const [displaySeconds, setDisplaySeconds] = useState(() => {
+    if (!config.isTimerRunning || !config.timerEndTime) {
+      return Math.max(0, config.timerSeconds);
+    }
+    return Math.max(0, Math.ceil((config.timerEndTime - Date.now()) / 1000));
+  });
+
+  useEffect(() => {
+    const remaining = (!config.isTimerRunning || !config.timerEndTime)
+      ? Math.max(0, config.timerSeconds)
+      : Math.max(0, Math.ceil((config.timerEndTime - Date.now()) / 1000));
+    setDisplaySeconds(remaining);
+  }, [config.isTimerRunning, config.timerEndTime, config.timerSeconds]);
+
+  useEffect(() => {
+    if (!config.isTimerRunning || !config.timerEndTime) return;
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((config.timerEndTime! - Date.now()) / 1000));
+      setDisplaySeconds(remaining);
+    };
+
+    tick();
+    const interval = setInterval(tick, 250);
+    return () => clearInterval(interval);
+  }, [config.isTimerRunning, config.timerEndTime]);
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
 
   const totalRed = cards.filter(c => c.role === 'red').length;
   const totalBlue = cards.filter(c => c.role === 'blue').length;
@@ -48,6 +77,14 @@ export const CodenamesSpymaster: React.FC<{
               🟢 {config.greenScore || 0}/{totalGreen}
             </div>
           )}
+          <div className={`px-3 py-1.5 rounded-lg border text-xs font-bold font-mono flex items-center gap-1.5 ${
+            displaySeconds <= 10 && config.isTimerRunning
+              ? 'bg-rose-950/80 border-rose-500 text-rose-300 animate-pulse'
+              : 'bg-slate-950/80 border-slate-700 text-slate-300'
+          }`}>
+            <Timer className={`w-3.5 h-3.5 ${displaySeconds <= 10 && config.isTimerRunning ? 'animate-spin' : ''}`} />
+            <span>{pad(Math.floor(displaySeconds / 60))}:{pad(displaySeconds % 60)}</span>
+          </div>
         </div>
       </div>
 

@@ -30,6 +30,7 @@ export interface CodenamesConfig {
   timerSeconds: number;
   initialTimerSeconds: number;
   isTimerRunning: boolean;
+  timerEndTime?: number | null;
   customWordBank?: string[];
   currentClue?: CodenamesClue | null;
 }

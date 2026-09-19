@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParty } from '../../context/PartyContext';
 import { CodenamesConfig, CodenamesCard } from '../../types/codenames';
 import { soundEngine } from '../../services/soundEngine';
@@ -18,6 +18,7 @@ export const CodenamesProjector: React.FC<{
     assassinTriggered = false,
     timerSeconds = 90,
     isTimerRunning = false,
+    timerEndTime = null,
     currentClue = null,
   } = config;
 
@@ -43,30 +44,55 @@ export const CodenamesProjector: React.FC<{
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPopupDismissed, assassinTriggered, winner]);
 
+  const [displaySeconds, setDisplaySeconds] = useState(() => {
+    if (!isTimerRunning || !timerEndTime) {
+      return Math.max(0, timerSeconds);
+    }
+    return Math.max(0, Math.ceil((timerEndTime - Date.now()) / 1000));
+  });
+  const lastTickedSecondRef = useRef<number | null>(null);
+  const hasBuzzedRef = useRef<boolean>(false);
+
+  // Sync displaySeconds whenever config changes
+  useEffect(() => {
+    const remaining = (!isTimerRunning || !timerEndTime)
+      ? Math.max(0, timerSeconds)
+      : Math.max(0, Math.ceil((timerEndTime - Date.now()) / 1000));
+    setDisplaySeconds(remaining);
+    if (!isTimerRunning) {
+      hasBuzzedRef.current = false;
+      lastTickedSecondRef.current = null;
+    }
+  }, [isTimerRunning, timerEndTime, timerSeconds]);
+
   // Turn timer countdown
   useEffect(() => {
-    if (!isActive || !isTimerRunning || winner || timerSeconds <= 0) return;
+    if (!isActive || !isTimerRunning || !timerEndTime || winner) return;
 
-    const interval = setInterval(() => {
-      if (timerSeconds <= 1) {
-        soundEngine.playBuzzer();
-        if (activeItem) {
-          codenamesAction(activeItem.id, 'toggle_timer');
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((timerEndTime - Date.now()) / 1000));
+      setDisplaySeconds(remaining);
+
+      if (remaining <= 0) {
+        if (!hasBuzzedRef.current) {
+          hasBuzzedRef.current = true;
+          soundEngine.playBuzzer();
+          if (activeItem) {
+            codenamesAction(activeItem.id, 'stop_timer');
+          }
         }
-      } else {
-        if (timerSeconds <= 10) {
+      } else if (remaining <= 10) {
+        if (lastTickedSecondRef.current !== remaining) {
+          lastTickedSecondRef.current = remaining;
           soundEngine.playTick();
         }
-        if (activeItem) {
-          // decrement
-          const item = activeItem;
-          codenamesAction(item.id, 'update_clue', { clueWord: currentClue?.word, clueCount: currentClue?.count });
-        }
       }
-    }, 1000);
+    };
 
+    tick();
+    const interval = setInterval(tick, 250);
     return () => clearInterval(interval);
-  }, [isActive, isTimerRunning, winner, timerSeconds, activeItem, codenamesAction, currentClue]);
+  }, [isActive, isTimerRunning, timerEndTime, winner, activeItem, codenamesAction]);
 
   const totalRed = cards.filter(c => c.role === 'red').length;
   const totalBlue = cards.filter(c => c.role === 'blue').length;
@@ -81,8 +107,8 @@ export const CodenamesProjector: React.FC<{
   };
 
   const pad = (n: number) => n.toString().padStart(2, '0');
-  const timerMins = Math.floor(timerSeconds / 60);
-  const timerSecs = timerSeconds % 60;
+  const timerMins = Math.floor(displaySeconds / 60);
+  const timerSecs = displaySeconds % 60;
 
   const currentTurnName = currentTurn === 'red' ? 'Czerwoni' : (currentTurn === 'blue' ? 'Niebiescy' : 'Zieloni');
   const currentTurnColor = currentTurn === 'red' ? 'text-rose-400' : (currentTurn === 'blue' ? 'text-blue-400' : 'text-emerald-400');
@@ -172,8 +198,8 @@ export const CodenamesProjector: React.FC<{
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-950/60 hover:bg-slate-900 border border-white/10 hover:border-purple-400/40 text-slate-200 cursor-pointer transition-all active:scale-95"
             title="Kliknij, aby uruchomić / zatrzymać stoper"
           >
-            <Timer className={`w-4 h-4 ${timerSeconds <= 10 && isTimerRunning ? 'text-rose-400 animate-spin' : 'text-slate-400'}`} />
-            <span className={`font-mono text-xl font-bold ${timerSeconds <= 10 && isTimerRunning ? 'text-rose-400 animate-pulse' : 'text-slate-100'}`}>
+            <Timer className={`w-4 h-4 ${displaySeconds <= 10 && isTimerRunning ? 'text-rose-400 animate-spin' : 'text-slate-400'}`} />
+            <span className={`font-mono text-xl font-bold ${displaySeconds <= 10 && isTimerRunning ? 'text-rose-400 animate-pulse' : 'text-slate-100'}`}>
               {pad(timerMins)}:{pad(timerSecs)}
             </span>
           </div>

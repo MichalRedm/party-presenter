@@ -122,6 +122,7 @@ export function generateCodenamesBoard(
     timerSeconds: 90,
     initialTimerSeconds: 90,
     isTimerRunning: false,
+    timerEndTime: null,
     customWordBank: customWords,
     currentClue: null,
   };

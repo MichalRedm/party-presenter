@@ -36,8 +36,7 @@ interface PartyContextValue {
   setSoundConfig: (enabled: boolean, volume: number) => void;
   triggerConfetti: (options?: { count?: number; spread?: number }) => void;
   triggerSound: (sound: 'fanfare' | 'buzzer' | 'ding' | 'drumroll' | 'tick' | 'victory' | 'click') => void;
-  // Module-specific high-level actions
-  codenamesAction: (itemId: string, action: 'reveal' | 'next_turn' | 'toggle_timer' | 'reset_timer' | 'new_game' | 'update_clue', payload?: { cardId?: number; clueWord?: string; clueCount?: number }) => void;
+  codenamesAction: (itemId: string, action: 'reveal' | 'next_turn' | 'toggle_timer' | 'reset_timer' | 'new_game' | 'update_clue' | 'stop_timer', payload?: { cardId?: number; clueWord?: string; clueCount?: number }) => void;
   hotseatAction: (itemId: string, action: 'draw' | 'reveal' | 'mark_used' | 'reset_used' | 'select_category', payload?: { category?: string; questionId?: string }) => void;
   // Profile & Data Management
   loadProfile: (profileId: string) => void;
@@ -475,7 +474,7 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
   const codenamesAction = useCallback(
     (
       itemId: string,
-      action: 'reveal' | 'next_turn' | 'toggle_timer' | 'reset_timer' | 'new_game' | 'update_clue',
+      action: 'reveal' | 'next_turn' | 'toggle_timer' | 'reset_timer' | 'new_game' | 'update_clue' | 'stop_timer',
       payload?: { cardId?: number; clueWord?: string; clueCount?: number }
     ) => {
       const item = activeProfile?.items.find(i => i.id === itemId);
@@ -595,21 +594,44 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
 
         const nextTurn = advanceTurn(currentConfig.currentTurn);
         soundEngine.playDing();
+        const initial = currentConfig.initialTimerSeconds || 90;
         updateItemConfig(itemId, {
           ...currentConfig,
           currentTurn: nextTurn,
-          timerSeconds: currentConfig.initialTimerSeconds || 90,
+          timerSeconds: initial,
+          timerEndTime: null,
+          isTimerRunning: false,
           currentClue: null,
         } as unknown as Record<string, unknown>);
       } else if (action === 'toggle_timer') {
+        const isStarting = !currentConfig.isTimerRunning;
+        const initial = currentConfig.initialTimerSeconds || 90;
+        const remaining = currentConfig.timerSeconds > 0 ? currentConfig.timerSeconds : initial;
+        const timerEndTime = isStarting ? Date.now() + remaining * 1000 : null;
+        const updatedSeconds = isStarting
+          ? remaining
+          : (currentConfig.timerEndTime ? Math.max(0, Math.ceil((currentConfig.timerEndTime - Date.now()) / 1000)) : remaining);
+
         updateItemConfig(itemId, {
           ...currentConfig,
-          isTimerRunning: !currentConfig.isTimerRunning,
+          isTimerRunning: isStarting,
+          timerEndTime,
+          timerSeconds: updatedSeconds,
+        } as unknown as Record<string, unknown>);
+      } else if (action === 'stop_timer') {
+        if (!currentConfig.isTimerRunning && currentConfig.timerSeconds === 0) return;
+        updateItemConfig(itemId, {
+          ...currentConfig,
+          isTimerRunning: false,
+          timerEndTime: null,
+          timerSeconds: 0,
         } as unknown as Record<string, unknown>);
       } else if (action === 'reset_timer') {
+        const initial = currentConfig.initialTimerSeconds || 90;
         updateItemConfig(itemId, {
           ...currentConfig,
-          timerSeconds: currentConfig.initialTimerSeconds || 90,
+          timerSeconds: initial,
+          timerEndTime: null,
           isTimerRunning: false,
         } as unknown as Record<string, unknown>);
       } else if (action === 'new_game') {
@@ -620,7 +642,13 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
           currentConfig.hasAssassin !== false
         );
         soundEngine.playFanfare();
-        updateItemConfig(itemId, freshBoard as unknown as Record<string, unknown>);
+        updateItemConfig(itemId, {
+          ...freshBoard,
+          timerSeconds: currentConfig.initialTimerSeconds || 90,
+          initialTimerSeconds: currentConfig.initialTimerSeconds || 90,
+          timerEndTime: null,
+          isTimerRunning: false,
+        } as unknown as Record<string, unknown>);
       } else if (action === 'update_clue' && payload?.clueWord) {
         updateItemConfig(itemId, {
           ...currentConfig,
@@ -628,6 +656,7 @@ export const PartyProvider: React.FC<{ children: React.ReactNode; isProjector?: 
         } as unknown as Record<string, unknown>);
       }
     },
+
     [activeProfile?.items, updateItemConfig]
   );
 

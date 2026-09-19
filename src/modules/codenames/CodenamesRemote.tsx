@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParty } from '../../context/PartyContext';
 import { CodenamesConfig } from '../../types/codenames';
 import { Button } from '../../components/ui/Button';
@@ -14,6 +14,36 @@ export const CodenamesRemote: React.FC<{
   const [clueWord, setClueWord] = useState('');
   const [clueCount, setClueCount] = useState(1);
   const [showSpymasterKey, setShowSpymasterKey] = useState(false);
+
+  const [displaySeconds, setDisplaySeconds] = useState(() => {
+    if (!config.isTimerRunning || !config.timerEndTime) {
+      return Math.max(0, config.timerSeconds);
+    }
+    return Math.max(0, Math.ceil((config.timerEndTime - Date.now()) / 1000));
+  });
+
+  useEffect(() => {
+    const remaining = (!config.isTimerRunning || !config.timerEndTime)
+      ? Math.max(0, config.timerSeconds)
+      : Math.max(0, Math.ceil((config.timerEndTime - Date.now()) / 1000));
+    setDisplaySeconds(remaining);
+  }, [config.isTimerRunning, config.timerEndTime, config.timerSeconds]);
+
+  useEffect(() => {
+    if (!config.isTimerRunning || !config.timerEndTime) return;
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((config.timerEndTime! - Date.now()) / 1000));
+      setDisplaySeconds(remaining);
+      if (remaining <= 0 && activeItem) {
+        codenamesAction(activeItem.id, 'stop_timer');
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 250);
+    return () => clearInterval(interval);
+  }, [config.isTimerRunning, config.timerEndTime, activeItem, codenamesAction]);
 
   if (!activeItem) return null;
 
@@ -72,7 +102,7 @@ export const CodenamesRemote: React.FC<{
           icon={config.isTimerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           className="w-full"
         >
-          {config.isTimerRunning ? 'Pauza stoper' : 'Start stoper'} ({config.timerSeconds}s)
+          {config.isTimerRunning ? 'Pauza stoper' : 'Start stoper'} ({displaySeconds}s)
         </Button>
 
         {/* Reset timer */}

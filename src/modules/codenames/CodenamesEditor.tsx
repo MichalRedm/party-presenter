@@ -116,7 +116,7 @@ export const CodenamesEditor: React.FC<{
             value={config.initialTimerSeconds || 90}
             onChange={e => {
               const sec = parseInt(e.target.value, 10) || 90;
-              onChange({ ...config, initialTimerSeconds: sec, timerSeconds: sec });
+              onChange({ ...config, initialTimerSeconds: sec, timerSeconds: sec, isTimerRunning: false, timerEndTime: null });
             }}
           />
         </div>
