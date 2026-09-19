@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParty } from '../../context/PartyContext';
 import { AmbientParticles } from '../effects/AmbientParticles';
 import { useKeyboardNavigation } from '../../hooks/useKeyboardNavigation';
+import { useWakeLock } from '../../hooks/useWakeLock';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import {
@@ -34,6 +35,7 @@ export const ProjectorLayout: React.FC<{ children: React.ReactNode }> = ({ child
   } = useParty();
 
   const { showHelp, setShowHelp, isBlackout, setIsBlackout } = useKeyboardNavigation(true);
+  useWakeLock(true);
   const [isFullscreen, setIsFullscreen] = useState(Boolean(document.fullscreenElement));
   const [controlsVisible, setControlsVisible] = useState(false);
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
