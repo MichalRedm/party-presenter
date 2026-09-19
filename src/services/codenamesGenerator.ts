@@ -43,17 +43,36 @@ export function generateCodenamesBoard(
   gameMode: CodenamesConfig['gameMode'] = 'standard',
   hasAssassin: boolean = true
 ): CodenamesConfig {
-  const combinedBank = Array.from(new Set([...customWords.map(w => w.toUpperCase().trim()), ...DEFAULT_POLISH_WORD_BANK])).filter(
-    w => w.length > 0
-  );
-
-  const shuffledWords = shuffleArray(combinedBank);
   const totalCards = gameMode === '3-team-epic' ? 36 : 25;
-  const selectedWords = shuffledWords.slice(0, totalCards);
 
-  // If words bank is too small, fallback
-  while (selectedWords.length < totalCards) {
-    selectedWords.push(`HASŁO_${selectedWords.length + 1}`);
+  const cleanedCustom = Array.from(
+    new Set(customWords.map(w => w.toUpperCase().trim()))
+  ).filter(w => w.length > 0);
+
+  let selectedWords: string[] = [];
+
+  if (cleanedCustom.length >= totalCards) {
+    // If we have enough custom words, use ONLY custom words (shuffled)
+    selectedWords = shuffleArray(cleanedCustom).slice(0, totalCards);
+  } else {
+    // Include ALL custom words first
+    selectedWords = [...cleanedCustom];
+
+    // Fill remaining slots with default words that aren't already in custom words
+    const customSet = new Set(cleanedCustom);
+    const availableDefaults = DEFAULT_POLISH_WORD_BANK.filter(w => !customSet.has(w));
+    const shuffledDefaults = shuffleArray(availableDefaults);
+    const needed = totalCards - selectedWords.length;
+
+    selectedWords.push(...shuffledDefaults.slice(0, needed));
+
+    // Fallback if total available words is somehow still less than totalCards
+    while (selectedWords.length < totalCards) {
+      selectedWords.push(`HASŁO_${selectedWords.length + 1}`);
+    }
+
+    // Shuffle so custom words are distributed randomly across the board
+    selectedWords = shuffleArray(selectedWords);
   }
 
   // Determine starting team

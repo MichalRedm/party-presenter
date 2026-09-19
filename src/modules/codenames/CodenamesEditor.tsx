@@ -137,7 +137,7 @@ export const CodenamesEditor: React.FC<{
           Własny bank słów (Personalizowane hasła o solenizancie/imprezie)
         </h4>
         <p className="text-xs text-slate-400">
-          Wpisz słowa oddzielone przecinkami lub nową linią. Aplikacja połączy je z wbudowanym polskim słownikiem (ponad 250 słów).
+          Wpisz słowa oddzielone przecinkami lub nową linią. Wszystkie słowa z własnego banku pojawią się na planszy w pierwszej kolejności, a wbudowany słownik uzupełni wyłącznie brakujące miejsca.
         </p>
 
         <Textarea
